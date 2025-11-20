@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Prueba Configuración</title>
+</h:head>
+
+<h:body>
+    <h:form>
+        <p:card style="width: 25rem; margin-bottom: 2em">
+            <f:facet name="title">Login Taller</f:facet>
+
+            <p:outputLabel for="txtUser" value="Usuario"/>
+            <p:inputText id="txtUser" value="#{loginBean.usuario}" required="true"/>
+
+            <p:outputLabel for="txtPass" value="Password"/>
+            <p:password id="txtPass" value="#{loginBean.password}" required="true"/>
+
+            <f:facet name="footer">
+                <p:commandButton icon="pi pi-check" value="Ingresar"
+                                 action="#{loginBean.ingresar}" update="@form"/>
+            </f:facet>
+        </p:card>
+
+        <p:growl id="msgs" showDetail="true"/>
+    </h:form>
+</h:body>
+</html>
