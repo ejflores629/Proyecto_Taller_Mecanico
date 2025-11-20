@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Gestión de Clientes</title>
+</h:head>
+
+<h:body>
+    <h:form id="formClientes">
+
+        <h2>Gestión de Clientes 👨‍💼</h2>
+
+        <p:growl id="msgs" showDetail="true" life="4000"/>
+
+        <p:toolbar>
+            <f:facet name="left">
+                <p:commandButton value="Nuevo Cliente" icon="pi pi-plus"
+                                 oncomplete="PF('manageClientDialog').show()"
+                                 actionListener="#{clienteBean.resetFormulario()}"
+                                 update=":formClientes:manage-dialog"/>
+
+                <p:commandButton value="Actualizar Lista" icon="pi pi-refresh"
+                                 action="#{clienteBean.cargarClientes()}"
+                                 update="clientesTable msgs"/>
+            </f:facet>
+        </p:toolbar>
+
+        <p:dataTable id="clientesTable" var="cliente" value="#{clienteBean.clientes}"
+                     widgetVar="clientesTable" rows="10" paginator="true"
+                     rowKey="#{cliente.doc_identidad}"
+                     style="margin-top:20px" emptyMessage="No se encontraron clientes activos.">
+
+            <p:column headerText="Documento" sortBy="#{cliente.doc_identidad}" filterBy="#{cliente.doc_identidad}">
+                <h:outputText value="#{cliente.doc_identidad}" />
+            </p:column>
+
+            <p:column headerText="Nombre" sortBy="#{cliente.nombre}" filterBy="#{cliente.nombre}">
+                <h:outputText value="#{cliente.nombre}" />
+            </p:column>
+
+            <p:column headerText="Teléfono">
+                <h:outputText value="#{cliente.telefono}" />
+            </p:column>
+
+            <p:column headerText="Correo">
+                <h:outputText value="#{cliente.correo}" />
+            </p:column>
+
+            <p:column headerText="Acciones" exportable="false">
+
+                <p:commandButton icon="pi pi-pencil" title="Editar"
+                                 oncomplete="PF('manageClientDialog').show()"
+                                 actionListener="#{clienteBean.seleccionarClienteParaEdicion(cliente)}"
+                                 update=":formClientes:manage-dialog" styleClass="ui-button-warning"/>
+
+                <p:commandButton icon="pi pi-times" title="Eliminar"
+                                 action="#{clienteBean.eliminarCliente(cliente)}"
+                                 update="clientesTable msgs" process="@this" styleClass="ui-button-danger"
+                                 style="margin-left: 5px;">
+                    <p:confirm header="Confirmación" message="¿Está seguro de desactivar este cliente? Esta acción es irreversible." icon="pi pi-info-circle"/>
+                </p:commandButton>
+            </p:column>
+        </p:dataTable>
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+            <p:commandButton value="Sí" type="button" styleClass="ui-confirmdialog-yes"/>
+        </p:confirmDialog>
+
+
+        <p:dialog header="#{clienteBean.clienteSeleccionado == null ? 'Crear Nuevo Cliente' : 'Editar Cliente'}"
+                  showEffect="fade" modal="true" widgetVar="manageClientDialog"
+                  responsive="true" style="width: 400px">
+
+            <p:outputPanel id="manage-dialog" class="ui-fluid">
+
+                <div class="field">
+                    <p:outputLabel for="docIdentidad">Documento de Identidad (PK)</p:outputLabel>
+                    <p:inputText id="docIdentidad"
+                                 value="#{clienteBean.clienteNuevo.doc_identidad}"
+                                 required="true"
+                                 readonly="#{clienteBean.clienteSeleccionado != null}"/> </div>
+
+                <div class="field">
+                    <p:outputLabel for="nombre">Nombre Completo</p:outputLabel>
+                    <p:inputText id="nombre" value="#{clienteBean.clienteNuevo.nombre}" required="true"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="telefono">Teléfono</p:outputLabel>
+                    <p:inputText id="telefono" value="#{clienteBean.clienteNuevo.telefono}"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="correo">Correo</p:outputLabel>
+                    <p:inputText id="correo" value="#{clienteBean.clienteNuevo.correo}"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="direccion">Dirección</p:outputLabel>
+                    <p:inputTextarea id="direccion" value="#{clienteBean.clienteNuevo.direccion}" rows="3"/>
+                </div>
+            </p:outputPanel>
+
+            <f:facet name="footer">
+                <p:commandButton icon="pi pi-check" value="Guardar" action="#{clienteBean.guardarCliente()}"
+                                 update="manage-dialog clientesTable msgs"
+                                 oncomplete="if (!args.validationFailed) PF('manageClientDialog').hide()"/>
+
+                <p:commandButton icon="pi pi-times" value="Cancelar" onclick="PF('manageClientDialog').hide()"
+                                 process="@this" styleClass="ui-button-secondary" style="margin-left: 5px;"/>
+            </f:facet>
+        </p:dialog>
+    </h:form>
+</h:body>
+</html>

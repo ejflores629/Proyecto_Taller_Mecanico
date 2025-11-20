@@ -1,5 +1,7 @@
 package hn.uth.proyecto_tallermecanico.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -8,7 +10,9 @@ public class DetalleOrden implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id_detalle;
+    @SerializedName("p_numero_orden")
     private String numero_orden;
+    @SerializedName("p_doc_tecnico")
     private String doc_tecnico;
     private String descripcion_tarea;
     private BigDecimal costo_mano_obra;

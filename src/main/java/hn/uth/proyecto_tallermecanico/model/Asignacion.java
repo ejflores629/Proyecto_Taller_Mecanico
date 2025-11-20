@@ -1,5 +1,7 @@
 package hn.uth.proyecto_tallermecanico.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -8,7 +10,9 @@ public class Asignacion implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id_asignacion;
+    @SerializedName("p_doc_tecnico")
     private String doc_tecnico;
+    @SerializedName("p_numero_orden")
     private String numero_orden;
     private Date fecha_asignacion;
 

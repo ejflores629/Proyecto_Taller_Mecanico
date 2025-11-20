@@ -1,5 +1,7 @@
 package hn.uth.proyecto_tallermecanico.model;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 
@@ -7,6 +9,7 @@ public class Repuesto implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @SerializedName("p_codigo_sku")
     private String codigo_sku;
     private String nombre;
     private BigDecimal precio_unitario;
