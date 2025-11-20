@@ -8,7 +8,7 @@ public class Usuario implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @SerializedName("p_doc_identidad")
+
     private String doc_identidad;
     private String nombre_completo;
     private String clave;

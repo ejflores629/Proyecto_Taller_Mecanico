@@ -10,7 +10,6 @@ public class Factura implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @SerializedName("p_numero_factura")
     private String numero_factura;
     private String numero_orden;
     private String doc_cliente;

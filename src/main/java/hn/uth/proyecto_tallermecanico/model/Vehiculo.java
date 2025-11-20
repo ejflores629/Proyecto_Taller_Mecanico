@@ -8,7 +8,7 @@ public class Vehiculo implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @SerializedName("p_placa")
+
     private String placa;
     private String doc_cliente;
     private String marca;

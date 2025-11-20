@@ -10,9 +10,7 @@ public class Asignacion implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Long id_asignacion;
-    @SerializedName("p_doc_tecnico")
     private String doc_tecnico;
-    @SerializedName("p_numero_orden")
     private String numero_orden;
     private Date fecha_asignacion;
 

@@ -10,7 +10,6 @@ public class Orden implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @SerializedName("p_numero_orden")
     private String numero_orden;
     private String placa_vehiculo;
     private Date fecha_entrada;
