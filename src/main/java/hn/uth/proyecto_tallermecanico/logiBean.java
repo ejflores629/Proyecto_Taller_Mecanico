@@ -4,20 +4,16 @@ import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
-import lombok.Getter;
-import lombok.Setter;
 import java.io.Serializable;
 
-@Named("loginBean") // Nombre para invocarlo desde el XHTML: #{loginBean.usuario}
-@ViewScoped         // Vive mientras el usuario esté en la misma pantalla
+@Named("loginBean")
+@ViewScoped
 public class logiBean implements Serializable {
 
         private static final long serialVersionUID = 1L;
 
-        @Getter @Setter
         private String usuario;
 
-        @Getter @Setter
         private String password;
 
         @PostConstruct
@@ -42,4 +38,19 @@ public class logiBean implements Serializable {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(severity, summary, detail));
         }
 
+    public String getUsuario() {
+        return usuario;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setUsuario(String usuario) {
+        this.usuario = usuario;
+    }
 }
