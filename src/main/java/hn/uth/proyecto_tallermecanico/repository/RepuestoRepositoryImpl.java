@@ -30,7 +30,7 @@ public class RepuestoRepositoryImpl implements RepuestoRepository {
                 return response.body().getItems();
             }
         } catch (IOException e) {
-            System.err.println("Error al obtener repuestos: " + e.getMessage());
+            System.err.println("Error conexión repuestos: " + e.getMessage());
         }
         return Collections.emptyList();
     }
@@ -43,38 +43,55 @@ public class RepuestoRepositoryImpl implements RepuestoRepository {
                 return response.body().getCount();
             }
         } catch (IOException e) {
-            System.err.println("Error al contar repuestos: " + e.getMessage());
+            System.err.println("Error conteo repuestos: " + e.getMessage());
         }
         return 0;
     }
 
     @Override
     public Repuesto findById(String sku) {
+        if (sku == null || sku.trim().isEmpty()) return null;
+
         try {
-            Response<Repuesto> response = apiService.getRepuesto(sku).execute();
-            if (response.isSuccessful()) {
-                return response.body();
+            // CORRECCIÓN: Recibimos la "Caja" (Colección)
+            Response<ORDSCollectionResponse<Repuesto>> response = apiService.getRepuesto(sku).execute();
+
+            if (response.isSuccessful() && response.body() != null) {
+                List<Repuesto> lista = response.body().getItems();
+                // Validamos si la caja trae algo adentro
+                if (lista != null && !lista.isEmpty()) {
+                    return lista.get(0);
+                }
             }
         } catch (IOException e) {
-            System.err.println("Error al buscar repuesto: " + e.getMessage());
+            System.err.println("Error buscar repuesto: " + e.getMessage());
         }
+        // Si la lista está vacía o falla, retornamos null (No existe)
         return null;
     }
 
     @Override
-    public void save(Repuesto repuesto) {
-        try {
-            Response<Void> response;
-            // Si 'activo' no es nulo, asumimos actualización
-            if (repuesto.getActivo() != null && !repuesto.getActivo().isEmpty()) {
-                response = apiService.actualizarRepuesto(repuesto.getCodigo_sku(), repuesto).execute();
-            } else {
-                response = apiService.crearRepuesto(repuesto).execute();
-            }
+    public void create(Repuesto repuesto) {
+        // VALIDACIÓN DE NEGOCIO: Evitar duplicados activos
+        Repuesto existente = findById(repuesto.getCodigo_sku());
 
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Error API Repuestos: " + response.code());
-            }
+        if (existente != null) {
+            throw new RuntimeException("⚠️ Ya existe un repuesto ACTIVO con el SKU " + repuesto.getCodigo_sku());
+        }
+
+        try {
+            Response<Void> response = apiService.crearRepuesto(repuesto).execute();
+            checkResponse(response, "Error al registrar repuesto");
+        } catch (IOException e) {
+            throw new RuntimeException("Error de conexión: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void update(Repuesto repuesto) {
+        try {
+            Response<Void> response = apiService.actualizarRepuesto(repuesto.getCodigo_sku(), repuesto).execute();
+            checkResponse(response, "Error al actualizar repuesto");
         } catch (IOException e) {
             throw new RuntimeException("Error de conexión: " + e.getMessage(), e);
         }
@@ -84,11 +101,20 @@ public class RepuestoRepositoryImpl implements RepuestoRepository {
     public void delete(String sku) {
         try {
             Response<Void> response = apiService.eliminarRepuesto(sku).execute();
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Error API al eliminar: " + response.code());
-            }
+            checkResponse(response, "Error al eliminar repuesto");
         } catch (IOException e) {
-            throw new RuntimeException("Error de conexión al eliminar: " + e.getMessage(), e);
+            throw new RuntimeException("Error de conexión: " + e.getMessage(), e);
+        }
+    }
+
+    private void checkResponse(Response<?> response, String errorMessage) throws IOException {
+        if (!response.isSuccessful()) {
+            String errorBody = response.errorBody() != null ? response.errorBody().string() : "Sin detalles";
+            if(errorBody.contains("<!DOCTYPE html>")) {
+                errorBody = "Error HTML del servidor (Posible 500 o restricción de BD)";
+            }
+            System.err.println("❌ API Error (" + response.code() + "): " + errorBody);
+            throw new RuntimeException(errorMessage + " (Código " + response.code() + ")");
         }
     }
 }

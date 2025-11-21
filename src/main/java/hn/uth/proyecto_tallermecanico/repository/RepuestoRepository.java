@@ -13,7 +13,9 @@ public interface RepuestoRepository {
 
     Repuesto findById(String sku);
 
-    void save(Repuesto repuesto);
+    void create(Repuesto repuesto);
+
+    void update(Repuesto repuesto);
 
     void delete(String sku);
 }

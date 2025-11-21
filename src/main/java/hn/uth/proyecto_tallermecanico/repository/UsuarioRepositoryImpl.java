@@ -30,7 +30,7 @@ public class UsuarioRepositoryImpl implements UsuarioRepository {
                 return response.body().getItems();
             }
         } catch (IOException e) {
-            System.err.println("Error al obtener usuarios: " + e.getMessage());
+            System.err.println("Error conexión usuarios: " + e.getMessage());
         }
         return Collections.emptyList();
     }
@@ -43,38 +43,58 @@ public class UsuarioRepositoryImpl implements UsuarioRepository {
                 return response.body().getCount();
             }
         } catch (IOException e) {
-            System.err.println("Error al contar usuarios: " + e.getMessage());
+            System.err.println("Error conteo usuarios: " + e.getMessage());
         }
         return 0;
     }
 
     @Override
     public Usuario findById(String docIdentidad) {
+        // Protección: DNI nulo o vacío no debe buscar
+        if (docIdentidad == null || docIdentidad.trim().isEmpty()) {
+            return null;
+        }
+
         try {
-            Response<Usuario> response = apiService.getUsuario(docIdentidad).execute();
-            if (response.isSuccessful()) {
-                return response.body();
+            // CAMBIO: Ahora recibimos la colección (la caja), no el usuario directo
+            Response<ORDSCollectionResponse<Usuario>> response = apiService.getUsuario(docIdentidad).execute();
+
+            if (response.isSuccessful() && response.body() != null) {
+                // La "caja" puede estar vacía (items = []) o tener datos.
+                List<Usuario> lista = response.body().getItems();
+                if (lista != null && !lista.isEmpty()) {
+                    // ¡Si la lista NO está vacía, entonces SÍ existe el usuario!
+                    return lista.get(0);
+                }
             }
         } catch (IOException e) {
-            System.err.println("Error al buscar usuario: " + e.getMessage());
+            System.err.println("Error buscar usuario: " + e.getMessage());
         }
+        // Si la lista está vacía o hubo error, retornamos null (Usuario NO existe)
         return null;
     }
 
     @Override
-    public void save(Usuario usuario) {
-        try {
-            Response<Void> response;
-            // Misma lógica que Cliente: Si tiene 'activo', asumimos update
-            if (usuario.getActivo() != null && !usuario.getActivo().isEmpty()) {
-                response = apiService.actualizarUsuario(usuario.getDoc_identidad(), usuario).execute();
-            } else {
-                response = apiService.crearUsuario(usuario).execute();
-            }
+    public void create(Usuario usuario) {
+        Usuario existente = findById(usuario.getDoc_identidad());
 
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Error API Usuarios: " + response.code());
-            }
+        if (existente != null) {
+            throw new RuntimeException("⚠️ Ya existe un usuario ACTIVO con el DNI " + usuario.getDoc_identidad() + " (" + existente.getNombre_completo() + ")");
+        }
+
+        try {
+            Response<Void> response = apiService.crearUsuario(usuario).execute();
+            checkResponse(response, "Error al crear usuario");
+        } catch (IOException e) {
+            throw new RuntimeException("Error de conexión: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void update(Usuario usuario) {
+        try {
+            Response<Void> response = apiService.actualizarUsuario(usuario.getDoc_identidad(), usuario).execute();
+            checkResponse(response, "Error al actualizar usuario");
         } catch (IOException e) {
             throw new RuntimeException("Error de conexión: " + e.getMessage(), e);
         }
@@ -84,11 +104,20 @@ public class UsuarioRepositoryImpl implements UsuarioRepository {
     public void delete(String docIdentidad) {
         try {
             Response<Void> response = apiService.eliminarUsuario(docIdentidad).execute();
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Error API al eliminar: " + response.code());
-            }
+            checkResponse(response, "Error al eliminar usuario");
         } catch (IOException e) {
-            throw new RuntimeException("Error de conexión al eliminar: " + e.getMessage(), e);
+            throw new RuntimeException("Error de conexión: " + e.getMessage(), e);
+        }
+    }
+
+    private void checkResponse(Response<?> response, String errorMessage) throws IOException {
+        if (!response.isSuccessful()) {
+            String errorBody = response.errorBody() != null ? response.errorBody().string() : "Sin detalles";
+            if(errorBody.contains("<!DOCTYPE html>")) {
+                errorBody = "Error HTML del servidor (Posible 500 o restricción de BD)";
+            }
+            System.err.println("❌ API Error (" + response.code() + "): " + errorBody);
+            throw new RuntimeException(errorMessage + " (Código " + response.code() + ")");
         }
     }
 }

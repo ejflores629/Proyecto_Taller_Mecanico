@@ -72,18 +72,20 @@ public class UsuarioBean implements Serializable {
 
     public void guardarUsuario() {
         try {
+            // LÓGICA CORREGIDA: Separamos explícitamente Edición vs Creación
             if (this.usuarioSeleccionado != null && this.usuarioSeleccionado.getDoc_identidad() != null) {
-                // Actualizar
-                usuarioRepository.save(this.usuarioSeleccionado);
+                // EDICIÓN -> Llamamos a update()
+                usuarioRepository.update(this.usuarioSeleccionado);
                 addMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario actualizado correctamente.");
                 this.usuarioSeleccionado = null;
             } else {
-                // Crear
-                usuarioRepository.save(this.usuarioNuevo);
+                // CREACIÓN -> Llamamos a create()
+                usuarioRepository.create(this.usuarioNuevo);
                 addMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario creado correctamente.");
                 this.usuarioNuevo = new Usuario();
             }
         } catch (Exception e) {
+            e.printStackTrace();
             addMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo guardar: " + e.getMessage());
         }
     }

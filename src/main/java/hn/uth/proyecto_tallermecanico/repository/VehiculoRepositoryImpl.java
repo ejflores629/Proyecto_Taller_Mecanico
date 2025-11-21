@@ -30,7 +30,7 @@ public class VehiculoRepositoryImpl implements VehiculoRepository {
                 return response.body().getItems();
             }
         } catch (IOException e) {
-            System.err.println("Error al obtener vehículos: " + e.getMessage());
+            System.err.println("Error obtener vehículos: " + e.getMessage());
         }
         return Collections.emptyList();
     }
@@ -43,40 +43,51 @@ public class VehiculoRepositoryImpl implements VehiculoRepository {
                 return response.body().getCount();
             }
         } catch (IOException e) {
-            System.err.println("Error al contar vehículos: " + e.getMessage());
+            System.err.println("Error contar vehículos: " + e.getMessage());
         }
         return 0;
     }
 
     @Override
     public Vehiculo findById(String placa) {
+        if (placa == null || placa.trim().isEmpty()) return null;
         try {
-            Response<Vehiculo> response = apiService.getVehiculo(placa).execute();
-            if (response.isSuccessful()) {
-                return response.body();
+            // CAMBIO: Recibimos colección
+            Response<ORDSCollectionResponse<Vehiculo>> response = apiService.getVehiculo(placa).execute();
+            if (response.isSuccessful() && response.body() != null) {
+                List<Vehiculo> lista = response.body().getItems();
+                if (lista != null && !lista.isEmpty()) {
+                    return lista.get(0);
+                }
             }
         } catch (IOException e) {
-            System.err.println("Error al buscar vehículo: " + e.getMessage());
+            System.err.println("Error buscar vehículo: " + e.getMessage());
         }
         return null;
     }
 
     @Override
     public void save(Vehiculo vehiculo) {
-        try {
-            Response<Void> response;
-            // Si tiene 'activo' poblado, asumimos que es una actualización
-            if (vehiculo.getActivo() != null && !vehiculo.getActivo().isEmpty()) {
-                response = apiService.actualizarVehiculo(vehiculo.getPlaca(), vehiculo).execute();
-            } else {
-                response = apiService.crearVehiculo(vehiculo).execute();
-            }
+        // IMPORTANTE: Aquí mantuve 'save' genérico en el ejemplo anterior,
+        // pero deberíamos separarlo si quieres la misma validación estricta.
+        // Por simplicidad y consistencia con lo que ya tenías, aplicamos la lógica interna:
 
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Error API Vehículos: " + response.code());
+        if (vehiculo.getActivo() != null && !vehiculo.getActivo().isEmpty()) {
+            // UPDATE
+            try {
+                Response<Void> response = apiService.actualizarVehiculo(vehiculo.getPlaca(), vehiculo).execute();
+                checkResponse(response, "Error actualizando vehículo");
+            } catch(IOException e) { throw new RuntimeException(e); }
+        } else {
+            // CREATE - Validamos existencia
+            Vehiculo existente = findById(vehiculo.getPlaca());
+            if (existente != null) {
+                throw new RuntimeException("⚠️ Ya existe un vehículo ACTIVO con la placa " + vehiculo.getPlaca());
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Error de conexión: " + e.getMessage(), e);
+            try {
+                Response<Void> response = apiService.crearVehiculo(vehiculo).execute();
+                checkResponse(response, "Error creando vehículo");
+            } catch(IOException e) { throw new RuntimeException(e); }
         }
     }
 
@@ -84,11 +95,15 @@ public class VehiculoRepositoryImpl implements VehiculoRepository {
     public void delete(String placa) {
         try {
             Response<Void> response = apiService.eliminarVehiculo(placa).execute();
-            if (!response.isSuccessful()) {
-                throw new RuntimeException("Error API al eliminar: " + response.code());
-            }
+            checkResponse(response, "Error eliminando vehículo");
         } catch (IOException e) {
-            throw new RuntimeException("Error de conexión al eliminar: " + e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void checkResponse(Response<?> response, String msg) throws IOException {
+        if (!response.isSuccessful()) {
+            throw new RuntimeException(msg + " Code: " + response.code());
         }
     }
 }

@@ -13,7 +13,9 @@ public interface UsuarioRepository {
 
     Usuario findById(String docIdentidad);
 
-    void save(Usuario usuario);
+    void create(Usuario usuario);
+
+    void update(Usuario usuario);
 
     void delete(String docIdentidad);
 }

@@ -27,7 +27,6 @@ public class ClienteBean implements Serializable {
     @Inject
     private ClienteRepository clienteRepository;
 
-    // CAMBIO: Usamos LazyDataModel en lugar de List
     @Getter
     private LazyDataModel<Cliente> clientesLazy;
 
@@ -49,21 +48,13 @@ public class ClienteBean implements Serializable {
 
             @Override
             public int count(Map<String, FilterMeta> filterBy) {
-                // PrimeFaces pregunta: "¿Cuántos hay en total?"
-                // Llamamos al endpoint /total
                 return (int) clienteRepository.count();
             }
 
             @Override
             public List<Cliente> load(int first, int pageSize, Map<String, SortMeta> sortBy, Map<String, FilterMeta> filterBy) {
-                // PrimeFaces pregunta: "Dame los registros desde X hasta Y"
-                // 'first' es el offset (inicio), 'pageSize' es el limit (cuantos traer)
-
                 List<Cliente> data = clienteRepository.findRange(first, pageSize);
-
-                // Importante: Decirle a PrimeFaces el tamaño total real para que calcule las páginas
                 this.setRowCount((int) clienteRepository.count());
-
                 return data;
             }
 
@@ -74,7 +65,6 @@ public class ClienteBean implements Serializable {
 
             @Override
             public Cliente getRowData(String rowKey) {
-                // Si seleccionas una fila, PrimeFaces usa esto para recuperar el objeto
                 return clienteRepository.findById(rowKey);
             }
         };
@@ -82,22 +72,17 @@ public class ClienteBean implements Serializable {
 
     public void guardarCliente() {
         try {
-            // Lógica unificada: Si clienteSeleccionado existe, es Edición. Si no, es Nuevo.
             if (this.clienteSeleccionado != null && this.clienteSeleccionado.getDoc_identidad() != null) {
                 // EDICIÓN
-                clienteRepository.save(this.clienteSeleccionado);
-                addMessage(FacesMessage.SEVERITY_INFO, "Actualizado", "Cliente actualizado correctamente.");
-                this.clienteSeleccionado = null; // Limpiar selección
+                clienteRepository.update(this.clienteSeleccionado);
+                addMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Cliente actualizado correctamente.");
+                this.clienteSeleccionado = null;
             } else {
                 // CREACIÓN
-                clienteRepository.save(this.clienteNuevo);
-                addMessage(FacesMessage.SEVERITY_INFO, "Creado", "Cliente registrado correctamente.");
-                this.clienteNuevo = new Cliente(); // Limpiar formulario
+                clienteRepository.create(this.clienteNuevo);
+                addMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Cliente registrado correctamente.");
+                this.clienteNuevo = new Cliente();
             }
-
-            // No necesitamos recargar toda la lista manualmente,
-            // el LazyDataModel se refrescará automáticamente en la vista (update="dt-clientes")
-
         } catch (Exception e) {
             addMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo guardar: " + e.getMessage());
         }
@@ -107,8 +92,6 @@ public class ClienteBean implements Serializable {
         try {
             clienteRepository.delete(cliente.getDoc_identidad());
             addMessage(FacesMessage.SEVERITY_INFO, "Eliminado", "Cliente desactivado correctamente.");
-
-            // Al actualizar la tabla desde el xhtml, el LazyModel volverá a cargar los datos
         } catch (Exception e) {
             addMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo eliminar: " + e.getMessage());
         }

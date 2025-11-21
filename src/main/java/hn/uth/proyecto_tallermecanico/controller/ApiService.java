@@ -7,22 +7,21 @@ import retrofit2.http.*;
 public interface ApiService {
 
     // =========================================================================
-    // 1. USUARIOS (Endpoints: usuarios/) - PK: doc_identidad
+    // 1. USUARIOS
     // =========================================================================
 
-    // MODIFICADO: Paginación Server-Side
     @GET("usuarios/")
     Call<ORDSCollectionResponse<Usuario>> getUsuarios(
             @Query("offset") int offset,
             @Query("limit") int limit
     );
 
-    // NUEVO: Conteo total para paginación
     @GET("usuarios/total")
     Call<CountResponse> getTotalUsuarios();
 
+    // incluso cuando buscamos por ID.
     @GET("usuarios/{doc_identidad}")
-    Call<Usuario> getUsuario(@Path("doc_identidad") String docIdentidad);
+    Call<ORDSCollectionResponse<Usuario>> getUsuario(@Path("doc_identidad") String docIdentidad);
 
     @POST("usuarios/")
     Call<Void> crearUsuario(@Body Usuario usuario);
@@ -35,7 +34,7 @@ public interface ApiService {
 
 
     // =========================================================================
-    // 2. CLIENTES (Endpoints: clientes/) - PK: doc_identidad
+    // 2. CLIENTES
     // =========================================================================
 
     @GET("clientes/")
@@ -47,8 +46,9 @@ public interface ApiService {
     @GET("clientes/total")
     Call<CountResponse> getTotalClientes();
 
+
     @GET("clientes/{doc_identidad}")
-    Call<Cliente> getCliente(@Path("doc_identidad") String docIdentidad);
+    Call<ORDSCollectionResponse<Cliente>> getCliente(@Path("doc_identidad") String docIdentidad);
 
     @POST("clientes/")
     Call<Void> crearCliente(@Body Cliente cliente);
@@ -61,7 +61,7 @@ public interface ApiService {
 
 
     // =========================================================================
-    // 3. VEHICULOS (Endpoints: vehiculos/) - PK: placa
+    // 3. VEHICULOS
     // =========================================================================
 
     @GET("vehiculos/")
@@ -73,8 +73,9 @@ public interface ApiService {
     @GET("vehiculos/total")
     Call<CountResponse> getTotalVehiculos();
 
+
     @GET("vehiculos/{placa}")
-    Call<Vehiculo> getVehiculo(@Path("placa") String placa);
+    Call<ORDSCollectionResponse<Vehiculo>> getVehiculo(@Path("placa") String placa);
 
     @POST("vehiculos/")
     Call<Void> crearVehiculo(@Body Vehiculo vehiculo);
@@ -87,7 +88,7 @@ public interface ApiService {
 
 
     // =========================================================================
-    // 4. REPUESTOS (Endpoints: repuestos/) - PK: codigo_sku
+    // 4. REPUESTOS
     // =========================================================================
 
     @GET("repuestos/")
@@ -99,8 +100,9 @@ public interface ApiService {
     @GET("repuestos/total")
     Call<CountResponse> getTotalRepuestos();
 
+
     @GET("repuestos/{sku}")
-    Call<Repuesto> getRepuesto(@Path("sku") String sku);
+    Call<ORDSCollectionResponse<Repuesto>> getRepuesto(@Path("sku") String sku);
 
     @POST("repuestos/")
     Call<Void> crearRepuesto(@Body Repuesto repuesto);
@@ -113,7 +115,7 @@ public interface ApiService {
 
 
     // =========================================================================
-    // 5. ORDENES (Endpoints: ordenes/) - PK: numero_orden
+    // 5. ORDENES
     // =========================================================================
 
     @GET("ordenes/")
@@ -125,8 +127,9 @@ public interface ApiService {
     @GET("ordenes/total")
     Call<CountResponse> getTotalOrdenes();
 
+
     @GET("ordenes/{num_orden}")
-    Call<Orden> getOrden(@Path("num_orden") String numOrden);
+    Call<ORDSCollectionResponse<Orden>> getOrden(@Path("num_orden") String numOrden);
 
     @POST("ordenes/")
     Call<Void> crearOrden(@Body Orden orden);
@@ -139,7 +142,7 @@ public interface ApiService {
 
 
     // =========================================================================
-    // 6. MATERIALES/REPUESTOS DE ORDEN (Nested) - Sin paginación (lista corta)
+    // 6. MATERIALES/REPUESTOS DE ORDEN
     // =========================================================================
 
     @GET("ordenes/{num_orden}/repuestos/")
@@ -153,10 +156,9 @@ public interface ApiService {
 
 
     // =========================================================================
-    // 7. MANO DE OBRA (Endpoints: ordenes-mano-obra/) - PK: id_detalle
+    // 7. MANO DE OBRA
     // =========================================================================
 
-    // Soporta filtrado por orden Y paginación global
     @GET("ordenes-mano-obra/")
     Call<ORDSCollectionResponse<DetalleOrden>> getDetallesPorOrden(
             @Query("numero_orden") String numeroOrden,
@@ -167,8 +169,9 @@ public interface ApiService {
     @GET("ordenes-mano-obra/total")
     Call<CountResponse> getTotalDetallesManoObra();
 
+
     @GET("ordenes-mano-obra/{id}")
-    Call<DetalleOrden> getDetalleOrden(@Path("id") Long idDetalle);
+    Call<ORDSCollectionResponse<DetalleOrden>> getDetalleOrden(@Path("id") Long idDetalle);
 
     @POST("ordenes-mano-obra/")
     Call<Void> crearDetalleOrden(@Body DetalleOrden detalleOrden);
@@ -181,7 +184,7 @@ public interface ApiService {
 
 
     // =========================================================================
-    // 8. ASIGNACIONES (Endpoints: asignaciones/) - PK: id_asignacion
+    // 8. ASIGNACIONES
     // =========================================================================
 
     @GET("asignaciones/")
@@ -194,8 +197,9 @@ public interface ApiService {
     @GET("asignaciones/total")
     Call<CountResponse> getTotalAsignaciones();
 
+
     @GET("asignaciones/{id}")
-    Call<Asignacion> getAsignacion(@Path("id") Long idAsignacion);
+    Call<ORDSCollectionResponse<Asignacion>> getAsignacion(@Path("id") Long idAsignacion);
 
     @POST("asignaciones/")
     Call<Void> crearAsignacion(@Body Asignacion asignacion);
@@ -208,7 +212,7 @@ public interface ApiService {
 
 
     // =========================================================================
-    // 9. FACTURAS (Endpoints: facturas/) - PK: numero_factura
+    // 9. FACTURAS
     // =========================================================================
 
     @GET("facturas/")
@@ -221,7 +225,7 @@ public interface ApiService {
     Call<CountResponse> getTotalFacturas();
 
     @GET("facturas/{num_factura}")
-    Call<Factura> getFactura(@Path("num_factura") String numFactura);
+    Call<ORDSCollectionResponse<Factura>> getFactura(@Path("num_factura") String numFactura);
 
     @POST("facturas/")
     Call<Void> crearFactura(@Body Factura factura);

@@ -13,7 +13,9 @@ public interface ClienteRepository {
 
     Cliente findById(String docIdentidad);
 
-    void save(Cliente cliente); // Puede ser crear o actualizar
+    void create(Cliente cliente);
+
+    void update(Cliente cliente);
 
     void delete(String docIdentidad);
 }

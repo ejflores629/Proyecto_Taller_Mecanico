@@ -72,15 +72,16 @@ public class RepuestoBean implements Serializable {
 
     public void guardarRepuesto() {
         try {
+            // LÓGICA UNIFICADA: Si existe objeto seleccionado con ID, es Update.
             if (this.repuestoSeleccionado != null && this.repuestoSeleccionado.getCodigo_sku() != null) {
-                // Actualizar
-                repuestoRepository.save(this.repuestoSeleccionado);
-                addMessage(FacesMessage.SEVERITY_INFO, "Actualizado", "Repuesto actualizado correctamente.");
+                // EDICIÓN
+                repuestoRepository.update(this.repuestoSeleccionado);
+                addMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Repuesto actualizado correctamente.");
                 this.repuestoSeleccionado = null;
             } else {
-                // Crear
-                repuestoRepository.save(this.repuestoNuevo);
-                addMessage(FacesMessage.SEVERITY_INFO, "Creado", "Repuesto registrado correctamente.");
+                // CREACIÓN
+                repuestoRepository.create(this.repuestoNuevo);
+                addMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Repuesto registrado correctamente.");
                 this.repuestoNuevo = new Repuesto();
             }
         } catch (Exception e) {
@@ -91,7 +92,7 @@ public class RepuestoBean implements Serializable {
     public void eliminarRepuesto(Repuesto repuesto) {
         try {
             repuestoRepository.delete(repuesto.getCodigo_sku());
-            addMessage(FacesMessage.SEVERITY_INFO, "Eliminado", "Repuesto eliminado correctamente.");
+            addMessage(FacesMessage.SEVERITY_INFO, "Eliminado", "Repuesto eliminado del inventario.");
         } catch (Exception e) {
             addMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo eliminar: " + e.getMessage());
         }
