@@ -55,34 +55,23 @@ public class ClienteBean implements Serializable {
 
     public void guardarCliente() {
         try {
-            // Validación de la lógica de negocio (antes de llamar al Repository)
-            if (clienteNuevo.getDoc_identidad() == null || clienteNuevo.getDoc_identidad().isEmpty()) {
-                addMessage(FacesMessage.SEVERITY_ERROR, "Error", "El Documento de Identidad es obligatorio.");
-                return;
+            // CASO 1: EDICIÓN (Viene del Modal)
+            if (this.clienteSeleccionado != null && this.clienteSeleccionado.getDoc_identidad() != null) {
+                clienteRepository.save(this.clienteSeleccionado); // Guardamos el seleccionado
+                this.clienteSeleccionado = null; // Limpiamos selección al terminar
+                addMessage(FacesMessage.SEVERITY_INFO, "Actualizado", "Cliente actualizado correctamente.");
             }
-            if (clienteNuevo.getNombre() == null || clienteNuevo.getNombre().isEmpty()) {
-                addMessage(FacesMessage.SEVERITY_ERROR, "Error", "El Nombre es obligatorio.");
-                return;
+            // CASO 2: CREACIÓN (Viene del Panel de Arriba)
+            else {
+                clienteRepository.save(this.clienteNuevo); // Guardamos el nuevo
+                this.clienteNuevo = new Cliente(); // Limpiamos el formulario de arriba
+                addMessage(FacesMessage.SEVERITY_INFO, "Creado", "Cliente creado correctamente.");
             }
 
-            // Llama al Repository
-            clienteRepository.save(clienteNuevo);
+            cargarClientes(); // Refrescar tabla
 
-            String mensajeExito = (clienteSeleccionado == null) ? "Cliente Creado con Éxito." : "Cliente Actualizado con Éxito.";
-
-            addMessage(FacesMessage.SEVERITY_INFO, "Éxito", mensajeExito);
-            resetFormulario();
-            cargarClientes();
-
-        } catch (RuntimeException e) {
-            // Manejo de errores de la API traducidos por el Repository
-            if (e.getMessage().contains("409")) {
-                addMessage(FacesMessage.SEVERITY_WARN, "Conflicto", "El Documento de Identidad ya existe.");
-            } else {
-                addMessage(FacesMessage.SEVERITY_ERROR, "Error", "Operación fallida: " + e.getMessage());
-            }
         } catch (Exception e) {
-            addMessage(FacesMessage.SEVERITY_FATAL, "Error General", "Fallo al guardar: " + e.getMessage());
+            addMessage(FacesMessage.SEVERITY_ERROR, "Error", e.getMessage());
         }
     }
 
@@ -101,7 +90,6 @@ public class ClienteBean implements Serializable {
         }
     }
 
-    // --- Métodos de UI y Utilidad (Resto del código igual) ---
 
     public void seleccionarClienteParaEdicion(Cliente cliente) {
         // Se clona el objeto para evitar modificar la lista directamente si la edición falla
