@@ -7,89 +7,99 @@
 <h:head>
     <title>Gestión de Clientes</title>
     <style>
-        /* --- ESTILOS GENERALES --- */
+        /* --- ESTILOS GENERALES Y ANIMACIONES --- */
         body {
-            background-color: #f4f7f6;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #495057;
         }
 
         .card-custom {
             background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid #eef2f7;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid #eff2f5;
+            transition: transform 0.2s ease;
+        }
+
+        .card-custom:hover {
+            transform: translateY(-3px); /* Efecto de elevación sutil */
         }
 
         .section-title {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: #495057;
+            color: #2c3e50;
             margin-bottom: 1.5rem;
-            border-bottom: 1px solid #dee2e6;
+            border-bottom: 2px solid #e9ecef;
             padding-bottom: 10px;
-        }
-
-        /* --- GRID SYSTEM PERSONALIZADO (Para asegurar 3 columnas) --- */
-        .custom-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr); /* 3 columnas iguales */
-            gap: 20px; /* Espacio entre campos */
-        }
-
-        /* En pantallas medianas (Tablets), bajar a 2 columnas */
-        @media (max-width: 992px) {
-            .custom-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        /* En pantallas pequeñas (Móviles), bajar a 1 columna */
-        @media (max-width: 768px) {
-            .custom-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Clases para expandir campos */
-        .span-2 { grid-column: span 2; } /* Ocupar 2 espacios */
-        .span-3 { grid-column: span 3; } /* Ocupar toda la fila */
-
-        /* Ajuste para móviles: que los span no rompan el diseño */
-        @media (max-width: 992px) {
-            .span-2, .span-3 { grid-column: span 1; } /* En móvil todo es 1 columna */
-        }
-
-        /* --- ESTILOS DE INPUTS --- */
-        .field {
             display: flex;
-            flex-direction: column;
-            gap: 5px;
+            align-items: center;
         }
 
-        .field label {
-            font-weight: 600;
-            color: #555;
-            font-size: 0.9rem;
+        .section-title i {
+            margin-right: 12px;
+            color: #3b82f6; /* Azul moderno */
         }
 
-        /* Asegurar que los inputs de PrimeFaces llenen su celda */
+        /* --- INPUTS MEJORADOS --- */
         body .ui-inputfield {
             width: 100%;
-            box-sizing: border-box; /* Importante para que el padding no rompa el ancho */
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        /* --- BOTÓN VERDE RESTAURADO --- */
+        body .ui-inputfield:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Etiquetas */
+        body .ui-outputlabel {
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: block;
+            color: #343a40;
+        }
+
+        /* --- GRID SYSTEM PERSONALIZADO (3 Columnas) --- */
+        .custom-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+        }
+
+        /* Responsivo */
+        @media (max-width: 992px) { .custom-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .custom-grid { grid-template-columns: 1fr; } }
+
+        .span-2 { grid-column: span 2; }
+        @media (max-width: 992px) { .span-2 { grid-column: span 1; } }
+
+        /* --- BOTONES --- */
         .btn-save {
-            background-color: #28a745 !important;
+            background-color: #28a745 !important; /* Verde Éxito */
             border-color: #28a745 !important;
-            color: #fff !important;
             font-weight: bold;
+            padding: 8px 20px;
         }
         .btn-save:hover {
             background-color: #218838 !important;
-            border-color: #1e7e34 !important;
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        /* Badge para ID */
+        .id-badge {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
         }
     </style>
 </h:head>
@@ -99,9 +109,11 @@
         <p:growl id="msgs" showDetail="true" life="4000"/>
 
         <div class="card-custom">
-            <div class="section-title">Registro de Clientes</div>
+            <div class="section-title">
+                <i class="pi pi-user-plus"/> Registro de Nuevo Cliente
+            </div>
 
-            <p:messages id="msgCrear" showDetail="true" closable="true">
+            <p:messages id="msgCrear" showDetail="true" closable="true" showIcon="true">
                 <p:autoUpdate/>
             </p:messages>
 
@@ -109,28 +121,38 @@
 
                 <div class="field">
                     <p:outputLabel for="newDoc" value="Documento Identidad" indicateRequired="true"/>
-                    <p:inputText id="newDoc" value="#{clienteBean.clienteNuevo.doc_identidad}"
-                                 required="true" requiredMessage="Documento requerido"
-                                 placeholder="Ej: 0801-1999-00123"/>
+                    <p:inputMask id="newDoc" value="#{clienteBean.clienteNuevo.doc_identidad}"
+                                 mask="9999-9999-99999"
+                                 required="true"
+                                 requiredMessage="⚠️ El DNI es obligatorio."
+                                 placeholder="0801-1999-01234"
+                                 validateMask="true"/>
                 </div>
 
                 <div class="field">
                     <p:outputLabel for="newNom" value="Nombre Completo" indicateRequired="true"/>
                     <p:inputText id="newNom" value="#{clienteBean.clienteNuevo.nombre}"
-                                 required="true" requiredMessage="Nombre requerido"
-                                 placeholder="Ej: Juan Pérez"/>
+                                 required="true" requiredMessage="⚠️ El Nombre es obligatorio."
+                                 placeholder="Ej: Juan Pérez">
+                        <f:validateLength minimum="3"/>
+                    </p:inputText>
                 </div>
 
                 <div class="field">
                     <p:outputLabel for="newTel" value="Teléfono"/>
                     <p:inputText id="newTel" value="#{clienteBean.clienteNuevo.telefono}"
-                                 placeholder="Ej: 9988-7766"/>
+                                 placeholder="Ej: 99887766">
+                        <p:keyFilter mask="num"/> <f:validateLength minimum="8" maximum="15"/>
+                    </p:inputText>
                 </div>
 
                 <div class="field">
                     <p:outputLabel for="newMail" value="Correo Electrónico"/>
                     <p:inputText id="newMail" value="#{clienteBean.clienteNuevo.correo}"
-                                 placeholder="Ej: usuario@email.com"/>
+                                 placeholder="usuario@ejemplo.com"
+                                 validatorMessage="⚠️ Formato de correo inválido.">
+                        <f:validateRegex pattern="^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$" />
+                    </p:inputText>
                 </div>
 
                 <div class="field span-2">
@@ -141,15 +163,16 @@
                 </div>
             </div>
 
-            <div style="margin-top: 25px; display: flex; gap: 10px;">
-                <p:commandButton value="Registrar Cliente" icon="pi pi-save"
+            <div style="margin-top: 25px; display: flex; gap: 15px;">
+                <p:commandButton value="Registrar Cliente" icon="pi pi-check-circle"
                                  action="#{clienteBean.guardarCliente()}"
                                  update="formClientes:dt-clientes formClientes:msgCrear formClientes:msgs @parent"
                                  validateClient="true"
-                                 styleClass="btn-save ui-button-raised"> <p:resetInput target="formClientes"/>
+                                 styleClass="btn-save ui-button-raised">
+                    <p:resetInput target="formClientes"/>
                 </p:commandButton>
 
-                <p:commandButton value="Limpiar Campos" icon="pi pi-eraser"
+                <p:commandButton value="Limpiar" icon="pi pi-eraser"
                                  actionListener="#{clienteBean.resetFormulario()}"
                                  update="@form"
                                  process="@this"
@@ -158,24 +181,35 @@
         </div>
 
         <div class="card-custom">
-            <div class="section-title">Listado de Clientes BD</div>
+            <div class="section-title">
+                <i class="pi pi-list"/> Base de Datos de Clientes
+            </div>
 
             <p:dataTable id="dt-clientes" widgetVar="dtClientes" var="cliente"
-                         value="#{clienteBean.clientes}"
-                         reflow="true" paginator="true" rows="10"
-                         rowKey="#{cliente.doc_identidad}"
+                         value="#{clienteBean.clientesLazy}"
+                         lazy="true"
+                         reflow="true"
                          stripedRows="true"
-                         emptyMessage="No se encontraron registros.">
 
-                <p:column headerText="DOC IDENTIDAD" sortBy="#{cliente.doc_identidad}" width="15%">
-                    <h:outputText value="#{cliente.doc_identidad}" style="font-weight: bold;"/>
+                         paginator="true"
+                         rows="3"
+                         paginatorPosition="bottom"
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+
+                         rowKey="#{cliente.doc_identidad}"
+                         emptyMessage="No hay registros disponibles en la base de datos.">
+
+                <p:column headerText="DNI / ID" width="18%">
+                    <span class="id-badge">#{cliente.doc_identidad}</span>
                 </p:column>
 
-                <p:column headerText="NOMBRE" sortBy="#{cliente.nombre}" filterBy="#{cliente.nombre}">
-                    <h:outputText value="#{cliente.nombre}" />
+                <p:column headerText="NOMBRE COMPLETO">
+                    <h:outputText value="#{cliente.nombre}" style="font-weight: 600;"/>
                 </p:column>
 
-                <p:column headerText="TELÉFONO" width="15%">
+                <p:column headerText="TELÉFONO" width="12%">
+                    <i class="pi pi-phone" style="font-size: 0.8rem; margin-right:5px; color:#888;"/>
                     <h:outputText value="#{cliente.telefono}" />
                 </p:column>
 
@@ -183,13 +217,14 @@
                     <h:outputText value="#{cliente.correo}" />
                 </p:column>
 
-                <p:column headerText="ACCIONES" exportable="false" style="text-align: center; width: 120px;">
+                <p:column headerText="OPCIONES" exportable="false" style="text-align: center; width: 130px;">
+
                     <p:commandButton icon="pi pi-pencil"
                                      update=":formClientes:dlgEditar"
                                      oncomplete="PF('dlgEditar').show()"
                                      styleClass="rounded-button ui-button-warning ui-button-flat"
                                      process="@this"
-                                     title="Editar">
+                                     title="Editar registro">
                         <f:setPropertyActionListener value="#{cliente}" target="#{clienteBean.clienteSeleccionado}" />
                     </p:commandButton>
 
@@ -198,23 +233,25 @@
                                      update="dt-clientes :formClientes:msgs"
                                      styleClass="rounded-button ui-button-danger ui-button-flat"
                                      process="@this"
-                                     title="Eliminar">
-                        <p:confirm header="Borrado Seguro"
-                                   message="¿Desactivar al cliente #{cliente.nombre}?"
+                                     title="Desactivar cliente">
+                        <p:confirm header="Confirmar Desactivación"
+                                   message="¿Seguro que desea eliminar a #{cliente.nombre}?"
                                    icon="pi pi-exclamation-triangle"/>
                     </p:commandButton>
                 </p:column>
             </p:dataTable>
         </div>
 
-        <p:dialog id="dlgEditar" header="Editar Cliente" showEffect="fade" modal="true"
-                  widgetVar="dlgEditar" responsive="true" width="500px">
+        <p:dialog id="dlgEditar" header="Actualizar Datos" showEffect="fade" modal="true"
+                  widgetVar="dlgEditar" responsive="true" width="550px"
+                  style="max-width: 95%;">
 
             <p:outputPanel id="manage-product-content" class="ui-fluid" rendered="#{not empty clienteBean.clienteSeleccionado}">
+
                 <div class="field" style="margin-bottom: 15px;">
-                    <p:outputLabel for="editDoc">Documento (No editable)</p:outputLabel>
+                    <p:outputLabel for="editDoc" value="Documento (No editable)"/>
                     <p:inputText id="editDoc" value="#{clienteBean.clienteSeleccionado.doc_identidad}" readonly="true"
-                                 style="background-color: #f0f0f0;"/>
+                                 style="background-color: #e9ecef; color: #495057; font-weight: bold;"/>
                 </div>
 
                 <div class="field" style="margin-bottom: 15px;">
@@ -225,11 +262,15 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div class="field">
                         <p:outputLabel for="editTel" value="Teléfono"/>
-                        <p:inputText id="editTel" value="#{clienteBean.clienteSeleccionado.telefono}"/>
+                        <p:inputText id="editTel" value="#{clienteBean.clienteSeleccionado.telefono}">
+                            <p:keyFilter mask="num"/>
+                        </p:inputText>
                     </div>
                     <div class="field">
                         <p:outputLabel for="editMail" value="Correo"/>
-                        <p:inputText id="editMail" value="#{clienteBean.clienteSeleccionado.correo}"/>
+                        <p:inputText id="editMail" value="#{clienteBean.clienteSeleccionado.correo}">
+                            <f:validateRegex pattern="^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$" />
+                        </p:inputText>
                     </div>
                 </div>
 
@@ -240,21 +281,22 @@
             </p:outputPanel>
 
             <f:facet name="footer">
-                <p:commandButton value="Guardar Cambios" icon="pi pi-check"
+                <p:commandButton value="Guardar Cambios" icon="pi pi-save"
                                  action="#{clienteBean.guardarCliente()}"
                                  update="manage-product-content dt-clientes msgs"
                                  process="manage-product-content @this"
+                                 validateClient="true"
                                  styleClass="btn-save"
                                  oncomplete="if (!args.validationFailed) PF('dlgEditar').hide()"/>
 
                 <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgEditar').hide()"
-                                 styleClass="ui-button-secondary ui-button-flat" type="button"/>
+                                 styleClass="ui-button-secondary ui-button-text"/>
             </f:facet>
         </p:dialog>
 
         <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
             <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
-            <p:commandButton value="Sí" type="button" styleClass="ui-confirmdialog-yes ui-button-danger" />
+            <p:commandButton value="Sí, Proceder" type="button" styleClass="ui-confirmdialog-yes ui-button-danger" />
         </p:confirmDialog>
 
     </h:form>

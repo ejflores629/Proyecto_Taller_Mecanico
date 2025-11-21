@@ -1,8 +1,7 @@
 package hn.uth.proyecto_tallermecanico.viewmodel;
 
-// Se eliminan las importaciones de RetrofitClient y ApiService
 import hn.uth.proyecto_tallermecanico.model.Cliente;
-import hn.uth.proyecto_tallermecanico.repository.ClienteRepository; // Nueva dependencia
+import hn.uth.proyecto_tallermecanico.repository.ClienteRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
@@ -11,9 +10,13 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Setter;
+import org.primefaces.model.FilterMeta;
+import org.primefaces.model.LazyDataModel;
+import org.primefaces.model.SortMeta;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 @Named("clienteBean")
 @ViewScoped
@@ -24,84 +27,91 @@ public class ClienteBean implements Serializable {
     @Inject
     private ClienteRepository clienteRepository;
 
+    // CAMBIO: Usamos LazyDataModel en lugar de List
     @Getter
-    private List<Cliente> clientes;
-    @Setter
-    @Getter
+    private LazyDataModel<Cliente> clientesLazy;
+
+    @Getter @Setter
     private Cliente clienteSeleccionado;
-    @Setter
-    @Getter
+
+    @Getter @Setter
     private Cliente clienteNuevo;
 
     @PostConstruct
     public void init() {
         this.clienteNuevo = new Cliente();
-        cargarClientes();
+        iniciarLazyModel();
     }
 
+    private void iniciarLazyModel() {
+        this.clientesLazy = new LazyDataModel<Cliente>() {
+            private static final long serialVersionUID = 1L;
 
-    public void cargarClientes() {
-        try {
-            // Llama al Repository en lugar de Retrofit
-            this.clientes = clienteRepository.findAll();
-            if (this.clientes == null) {
-                this.clientes = List.of(); // Si hay error en findAll, retorna lista vacía.
-                addMessage(FacesMessage.SEVERITY_WARN, "API Status", "No se pudieron cargar los clientes o la lista está vacía.");
+            @Override
+            public int count(Map<String, FilterMeta> filterBy) {
+                // PrimeFaces pregunta: "¿Cuántos hay en total?"
+                // Llamamos al endpoint /total
+                return (int) clienteRepository.count();
             }
-        } catch (Exception e) {
-            addMessage(FacesMessage.SEVERITY_FATAL, "Error de Conexión", "Fallo al conectar con el servidor: " + e.getMessage());
-        }
+
+            @Override
+            public List<Cliente> load(int first, int pageSize, Map<String, SortMeta> sortBy, Map<String, FilterMeta> filterBy) {
+                // PrimeFaces pregunta: "Dame los registros desde X hasta Y"
+                // 'first' es el offset (inicio), 'pageSize' es el limit (cuantos traer)
+
+                List<Cliente> data = clienteRepository.findRange(first, pageSize);
+
+                // Importante: Decirle a PrimeFaces el tamaño total real para que calcule las páginas
+                this.setRowCount((int) clienteRepository.count());
+
+                return data;
+            }
+
+            @Override
+            public String getRowKey(Cliente cliente) {
+                return cliente.getDoc_identidad();
+            }
+
+            @Override
+            public Cliente getRowData(String rowKey) {
+                // Si seleccionas una fila, PrimeFaces usa esto para recuperar el objeto
+                return clienteRepository.findById(rowKey);
+            }
+        };
     }
 
     public void guardarCliente() {
         try {
-            // CASO 1: EDICIÓN (Viene del Modal)
+            // Lógica unificada: Si clienteSeleccionado existe, es Edición. Si no, es Nuevo.
             if (this.clienteSeleccionado != null && this.clienteSeleccionado.getDoc_identidad() != null) {
-                clienteRepository.save(this.clienteSeleccionado); // Guardamos el seleccionado
-                this.clienteSeleccionado = null; // Limpiamos selección al terminar
+                // EDICIÓN
+                clienteRepository.save(this.clienteSeleccionado);
                 addMessage(FacesMessage.SEVERITY_INFO, "Actualizado", "Cliente actualizado correctamente.");
-            }
-            // CASO 2: CREACIÓN (Viene del Panel de Arriba)
-            else {
-                clienteRepository.save(this.clienteNuevo); // Guardamos el nuevo
-                this.clienteNuevo = new Cliente(); // Limpiamos el formulario de arriba
-                addMessage(FacesMessage.SEVERITY_INFO, "Creado", "Cliente creado correctamente.");
+                this.clienteSeleccionado = null; // Limpiar selección
+            } else {
+                // CREACIÓN
+                clienteRepository.save(this.clienteNuevo);
+                addMessage(FacesMessage.SEVERITY_INFO, "Creado", "Cliente registrado correctamente.");
+                this.clienteNuevo = new Cliente(); // Limpiar formulario
             }
 
-            cargarClientes(); // Refrescar tabla
+            // No necesitamos recargar toda la lista manualmente,
+            // el LazyDataModel se refrescará automáticamente en la vista (update="dt-clientes")
 
         } catch (Exception e) {
-            addMessage(FacesMessage.SEVERITY_ERROR, "Error", e.getMessage());
+            addMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo guardar: " + e.getMessage());
         }
     }
 
     public void eliminarCliente(Cliente cliente) {
         try {
-            // Llama al Repository
             clienteRepository.delete(cliente.getDoc_identidad());
+            addMessage(FacesMessage.SEVERITY_INFO, "Eliminado", "Cliente desactivado correctamente.");
 
-            addMessage(FacesMessage.SEVERITY_INFO, "Eliminado", "Cliente " + cliente.getNombre() + " desactivado.");
-            cargarClientes();
-
-        } catch (RuntimeException e) {
-            addMessage(FacesMessage.SEVERITY_ERROR, "Error de API", "No se pudo eliminar el cliente: " + e.getMessage());
+            // Al actualizar la tabla desde el xhtml, el LazyModel volverá a cargar los datos
         } catch (Exception e) {
-            addMessage(FacesMessage.SEVERITY_FATAL, "Error de Conexión", "Fallo al eliminar: " + e.getMessage());
+            addMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo eliminar: " + e.getMessage());
         }
-    }
-
-
-    public void seleccionarClienteParaEdicion(Cliente cliente) {
-        // Se clona el objeto para evitar modificar la lista directamente si la edición falla
-        this.clienteSeleccionado = cliente;
-        this.clienteNuevo = new Cliente(
-                cliente.getDoc_identidad(),
-                cliente.getNombre(),
-                cliente.getTelefono(),
-                cliente.getCorreo(),
-                cliente.getDireccion(),
-                cliente.getActivo()
-        );
     }
 
     public void resetFormulario() {
@@ -112,7 +122,4 @@ public class ClienteBean implements Serializable {
     private void addMessage(FacesMessage.Severity severity, String summary, String detail) {
         FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(severity, summary, detail));
     }
-
-
-
 }
