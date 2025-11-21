@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Órdenes de Trabajo</title>
+    <style>
+        /* --- Estilos Globales --- */
+        body { background-color: #f8f9fa; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #495057; }
+        .card-custom { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: 1px solid #eff2f5; transition: transform 0.2s ease; }
+        .section-title { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; display: flex; align-items: center; }
+        .section-title i { margin-right: 12px; color: #3b82f6; }
+        body .ui-inputfield { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ced4da; }
+        body .ui-inputfield:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        body .ui-outputlabel { font-weight: 600; margin-bottom: 6px; display: block; color: #343a40; }
+
+        .custom-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; }
+        @media (max-width: 768px) { .custom-grid { grid-template-columns: 1fr; } }
+
+        .btn-save { background-color: #28a745 !important; border-color: #28a745 !important; font-weight: bold; padding: 8px 20px; }
+
+        .ord-badge { background-color: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
+        .status-badge { padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold; color: #fff; background-color: #6c757d; }
+        .status-PENDIENTE { background-color: #ffc107; color: #000; }
+        .status-TERMINADA { background-color: #28a745; }
+        .status-EN_PROCESO { background-color: #17a2b8; }
+    </style>
+</h:head>
+
+<h:body>
+    <h:form id="formOrdenes">
+        <p:growl id="msgs" showDetail="true" life="4000" globalOnly="true"/>
+
+        <div class="card-custom">
+            <div class="section-title">
+                <i class="pi pi-wrench"/> Nueva Orden de Trabajo
+            </div>
+
+            <p:messages id="msgCrear" showDetail="true" closable="true"><p:autoUpdate/></p:messages>
+
+            <div class="custom-grid">
+                <div class="field">
+                    <p:outputLabel for="newNum" value="Número de Orden" indicateRequired="true"/>
+
+                    <div class="ui-inputgroup">
+                        <p:commandButton icon="pi pi-refresh"
+                                         actionListener="#{ordenBean.generarNumeroOrden}"
+                                         update="newNum msgs"
+                                         styleClass="ui-button-warning"
+                                         title="Generar siguiente número disponible"/>
+
+                        <p:inputText id="newNum" value="#{ordenBean.ordenNueva.numero_orden}"
+                                     readonly="true"
+                                     placeholder="Haga clic para generar ->"
+                                     required="true" requiredMessage="⚠️ Debe generar el número de orden."
+                                     style="font-weight: bold; color: #00688C;"/>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="newVehiculo" value="Vehículo / Cliente" indicateRequired="true"/>
+                    <p:selectOneMenu id="newVehiculo" value="#{ordenBean.ordenNueva.placa_vehiculo}"
+                                     style="width:100%" filter="true" filterMatchMode="contains"
+                                     required="true" requiredMessage="⚠️ Seleccione un vehículo.">
+                        <f:selectItem itemLabel="-- Seleccione Vehículo --" itemValue=""/>
+                        <f:selectItems value="#{ordenBean.listaVehiculos}" var="v"
+                                       itemLabel="#{v.placa} | #{v.marca} #{v.modelo} (#{v.nombre_cliente})"
+                                       itemValue="#{v.placa}"/>
+                    </p:selectOneMenu>
+                </div>
+
+                <div class="field" style="grid-column: span 2;">
+                    <p:outputLabel for="newDesc" value="Descripción del Problema" indicateRequired="true"/>
+                    <p:inputTextarea id="newDesc" value="#{ordenBean.ordenNueva.descripcion}"
+                                     rows="2" required="true" requiredMessage="⚠️ Describa el problema."
+                                     placeholder="Ej: Ruido en frenos delanteros, cambio de aceite..."/>
+                </div>
+
+                <div class="field" style="grid-column: span 2;">
+                    <div style="margin-bottom: 10px;">
+                        <p:selectBooleanCheckbox id="chkObs" value="#{ordenBean.incluirObservaciones}"
+                                                 itemLabel=" ¿Agregar Observaciones Adicionales?">
+                            <p:ajax update="panelObs"/>
+                        </p:selectBooleanCheckbox>
+                    </div>
+
+                    <p:outputPanel id="panelObs">
+                        <p:inputTextarea value="#{ordenBean.ordenNueva.observaciones}"
+                                         rows="2" placeholder="Detalles técnicos extra, estado de la pintura, etc..."
+                                         rendered="#{ordenBean.incluirObservaciones}"
+                                         style="width: 100%;"/>
+                    </p:outputPanel>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; display: flex; gap: 15px;">
+                <p:commandButton value="Generar Orden" icon="pi pi-check-circle"
+                                 action="#{ordenBean.guardarOrden()}"
+                                 update="formOrdenes:dt-ordenes formOrdenes:msgCrear formOrdenes:msgs @parent"
+                                 validateClient="true" styleClass="btn-save ui-button-raised">
+                    <p:resetInput target="formOrdenes"/>
+                </p:commandButton>
+
+                <p:commandButton value="Limpiar" icon="pi pi-eraser"
+                                 actionListener="#{ordenBean.resetFormulario()}"
+                                 update="@form" process="@this"
+                                 styleClass="ui-button-secondary ui-button-outlined"/>
+            </div>
+        </div>
+
+        <div class="card-custom">
+            <div class="section-title"><i class="pi pi-list"/> Historial de Órdenes</div>
+
+            <p:dataTable id="dt-ordenes" widgetVar="dtOrdenes" var="orden"
+                         value="#{ordenBean.ordenesLazy}" lazy="true"
+                         reflow="true" stripedRows="true" paginator="true" rows="5"
+                         paginatorPosition="bottom" rowKey="#{orden.numero_orden}"
+                         emptyMessage="No hay órdenes registradas.">
+
+                <p:column headerText="# ORDEN" width="15%">
+                    <span class="ord-badge">#{orden.numero_orden}</span>
+                </p:column>
+
+                <p:column headerText="VEHÍCULO">
+                    <h:outputText value="#{orden.vehiculo}" style="font-weight: 600;"/>
+                    <br/><small style="color:#888;">#{orden.placa_vehiculo}</small>
+                </p:column>
+
+                <p:column headerText="CLIENTE">
+                    <h:outputText value="#{orden.cliente}"/>
+                </p:column>
+
+                <p:column headerText="ESTADO" width="12%" style="text-align: center;">
+                    <span class="status-badge status-#{orden.estado.replace(' ', '_')}">#{orden.estado}</span>
+                </p:column>
+
+                <p:column headerText="COSTO" width="12%" style="text-align: right;">
+                    <h:outputText value="#{orden.costo_total}" style="color: #28a745; font-weight: bold;">
+                        <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
+                    </h:outputText>
+                </p:column>
+
+                <p:column headerText="OPCIONES" exportable="false" style="text-align: center; width: 120px;">
+                    <p:commandButton icon="pi pi-pencil" update=":formOrdenes:dlgEditar"
+                                     oncomplete="PF('dlgEditar').show()"
+                                     styleClass="rounded-button ui-button-warning ui-button-flat"
+                                     process="@this" title="Editar">
+                        <f:setPropertyActionListener value="#{orden}" target="#{ordenBean.ordenSeleccionada}" />
+                    </p:commandButton>
+
+                    <p:button icon="pi pi-list" title="Ver Detalles y Costos"
+                              outcome="detalle_orden.xhtml"
+                              styleClass="rounded-button ui-button-info ui-button-flat">
+                        <f:param name="orden" value="#{orden.numero_orden}"/>
+                    </p:button>
+
+                    <p:commandButton icon="pi pi-trash" action="#{ordenBean.eliminarOrden(orden)}"
+                                     update="dt-ordenes :formOrdenes:msgs"
+                                     styleClass="rounded-button ui-button-danger ui-button-flat"
+                                     process="@this" title="Anular">
+                        <p:confirm header="Confirmar" message="¿Anular orden #{orden.numero_orden}?" icon="pi pi-exclamation-triangle"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+        </div>
+
+        <p:dialog id="dlgEditar" header="Gestión de Orden" showEffect="fade" modal="true"
+                  widgetVar="dlgEditar" responsive="true" width="600px">
+
+            <p:outputPanel id="manage-ord-content" class="ui-fluid" rendered="#{not empty ordenBean.ordenSeleccionada}">
+                <p:messages id="msgEdit" showDetail="true" closable="true"><p:autoUpdate/></p:messages>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editNum" value="Número Orden (No editable)"/>
+                    <p:inputText id="editNum" value="#{ordenBean.ordenSeleccionada.numero_orden}" readonly="true"
+                                 style="background-color: #e9ecef; font-weight: bold;"/>
+                </div>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editVeh" value="Vehículo (No editable)"/>
+                    <p:inputText id="editVeh" value="#{ordenBean.ordenSeleccionada.vehiculo} - #{ordenBean.ordenSeleccionada.placa_vehiculo}"
+                                 readonly="true" style="background-color: #e9ecef;"/>
+                </div>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editDesc" value="Descripción"/>
+                    <p:inputTextarea id="editDesc" value="#{ordenBean.ordenSeleccionada.descripcion}" rows="2" required="true"/>
+                </div>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editObs" value="Observaciones Técnicas"/>
+                    <p:inputTextarea id="editObs" value="#{ordenBean.ordenSeleccionada.observaciones}" rows="2"
+                                     placeholder="Notas del mecánico..."/>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="field">
+                        <p:outputLabel for="editEstado" value="Estado"/>
+                        <p:selectOneMenu id="editEstado" value="#{ordenBean.ordenSeleccionada.estado}">
+                            <f:selectItems value="#{ordenBean.listaEstados}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="field">
+                        <p:outputLabel for="viewCosto" value="Costo Total (L.)"/>
+                        <p:inputNumber id="viewCosto" value="#{ordenBean.ordenSeleccionada.costo_total}"
+                                       readonly="true" symbol="L. " symbolPosition="p"
+                                       styleClass="ui-state-disabled"/>
+                    </div>
+                </div>
+            </p:outputPanel>
+
+            <f:facet name="footer">
+                <p:commandButton value="Guardar Cambios" icon="pi pi-save"
+                                 action="#{ordenBean.guardarOrden()}"
+                                 update="manage-ord-content dt-ordenes msgs"
+                                 process="manage-ord-content @this" styleClass="btn-save"
+                                 oncomplete="if (!args.validationFailed) PF('dlgEditar').hide()"/>
+                <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgEditar').hide()"
+                                 styleClass="ui-button-secondary ui-button-text"/>
+            </f:facet>
+        </p:dialog>
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+            <p:commandButton value="Sí, anular" type="button" styleClass="ui-confirmdialog-yes ui-button-danger" />
+        </p:confirmDialog>
+    </h:form>
+</h:body>
+</html>

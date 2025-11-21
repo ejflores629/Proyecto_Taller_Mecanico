@@ -7,7 +7,7 @@
 <h:head>
     <title>Gestión de Usuarios</title>
     <style>
-        /* --- Mismos estilos que cliente.xhtml --- */
+        /* --- Estilos Generales --- */
         body { background-color: #f8f9fa; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #495057; }
         .card-custom { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: 1px solid #eff2f5; transition: transform 0.2s ease; }
         .card-custom:hover { transform: translateY(-3px); }
@@ -16,7 +16,7 @@
         body .ui-inputfield { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ced4da; transition: border-color 0.3s, box-shadow 0.3s; }
         body .ui-inputfield:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
         body .ui-outputlabel { font-weight: 600; margin-bottom: 6px; display: block; color: #343a40; }
-        .custom-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; } /* 2 columnas para usuario se ve mejor */
+        .custom-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; }
         @media (max-width: 768px) { .custom-grid { grid-template-columns: 1fr; } }
         .btn-save { background-color: #28a745 !important; border-color: #28a745 !important; font-weight: bold; padding: 8px 20px; }
         .btn-save:hover { background-color: #218838 !important; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
@@ -27,7 +27,8 @@
 
 <h:body>
     <h:form id="formUsuarios">
-        <p:growl id="msgs" showDetail="true" life="4000"/>
+
+        <p:growl id="msgs" showDetail="true" life="4000" globalOnly="true"/>
 
         <div class="card-custom">
             <div class="section-title">
@@ -59,15 +60,22 @@
                     <p:password id="newClave" value="#{usuarioBean.usuarioNuevo.clave}"
                                 required="true" requiredMessage="⚠️ La clave es obligatoria."
                                 toggleMask="true" redisplay="true"
-                                placeholder="******"/>
+                                placeholder="******"
+                                validatorMessage="⚠️ La clave debe tener mínimo 5 caracteres y 1 símbolo.">
+                        <f:validateLength minimum="5"/>
+                        <f:validateRegex pattern="^.*[^a-zA-Z0-9].*$"/>
+                    </p:password>
+                    <small style="color: #888;">Mínimo 5 caracteres y un símbolo especial.</small>
                 </div>
 
                 <div class="field">
                     <p:outputLabel for="newRol" value="Rol Asignado" indicateRequired="true"/>
-                    <p:selectOneMenu id="newRol" value="#{usuarioBean.usuarioNuevo.rol}" style="width:100%" required="true">
+                    <p:selectOneMenu id="newRol" value="#{usuarioBean.usuarioNuevo.rol}"
+                                     style="width:100%" required="true" requiredMessage="⚠️ Seleccione un Rol.">
                         <f:selectItem itemLabel="Seleccione un Rol" itemValue=""/>
                         <f:selectItem itemLabel="Administrador" itemValue="ADMIN"/>
                         <f:selectItem itemLabel="Técnico" itemValue="TECNICO"/>
+                        <f:selectItem itemLabel="Recepción" itemValue="RECEPCION"/>
                     </p:selectOneMenu>
                 </div>
             </div>
@@ -134,6 +142,11 @@
                   widgetVar="dlgEditar" responsive="true" width="500px">
 
             <p:outputPanel id="manage-user-content" class="ui-fluid" rendered="#{not empty usuarioBean.usuarioSeleccionado}">
+
+                <p:messages id="msgEdit" showDetail="true" closable="true">
+                    <p:autoUpdate/>
+                </p:messages>
+
                 <div class="field" style="margin-bottom: 15px;">
                     <p:outputLabel for="editDoc" value="Documento (No editable)"/>
                     <p:inputText id="editDoc" value="#{usuarioBean.usuarioSeleccionado.doc_identidad}" readonly="true"
@@ -146,13 +159,20 @@
                 </div>
 
                 <div class="field" style="margin-bottom: 15px;">
-                    <p:outputLabel for="editClave" value="Clave (Dejar igual si no cambia)"/>
-                    <p:password id="editClave" value="#{usuarioBean.usuarioSeleccionado.clave}" toggleMask="true" redisplay="true"/>
+                    <p:outputLabel for="editClave" value="Clave (Dejar en blanco si no cambia)"/>
+
+                    <p:password id="editClave" value="#{usuarioBean.usuarioSeleccionado.clave}"
+                                toggleMask="true" redisplay="true"
+                                validatorMessage="⚠️ La clave debe tener mínimo 5 caracteres y 1 símbolo.">
+                        <f:validateLength minimum="5"/>
+                        <f:validateRegex pattern="^.*[^a-zA-Z0-9].*$"/>
+                    </p:password>
                 </div>
 
                 <div class="field">
                     <p:outputLabel for="editRol" value="Rol"/>
-                    <p:selectOneMenu id="editRol" value="#{usuarioBean.usuarioSeleccionado.rol}">
+                    <p:selectOneMenu id="editRol" value="#{usuarioBean.usuarioSeleccionado.rol}"
+                                     required="true" requiredMessage="⚠️ El rol es requerido.">
                         <f:selectItem itemLabel="Administrador" itemValue="ADMIN"/>
                         <f:selectItem itemLabel="Técnico" itemValue="TECNICO"/>
                         <f:selectItem itemLabel="Recepción" itemValue="RECEPCION"/>
@@ -165,6 +185,7 @@
                                  action="#{usuarioBean.guardarUsuario()}"
                                  update="manage-user-content dt-usuarios msgs"
                                  process="manage-user-content @this"
+                                 validateClient="true"
                                  styleClass="btn-save"
                                  oncomplete="if (!args.validationFailed) PF('dlgEditar').hide()"/>
                 <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgEditar').hide()"
