@@ -19,39 +19,54 @@ public class AuthFilter implements Filter {
         HttpServletRequest req = (HttpServletRequest) request;
         HttpServletResponse res = (HttpServletResponse) response;
 
-        // ========================================================================
-        // 1. SOLUCIÓN AL BOTÓN "ATRÁS": CABECERAS ANTI-CACHÉ
-        // ========================================================================
-        // Esto obliga al navegador a no guardar la página en su memoria.
-        // Si el usuario da "Atrás", el navegador tendrá que pedirla al servidor de nuevo,
-        // y el filtro detectará que no hay sesión.
-        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
-        res.setHeader("Pragma", "no-cache"); // HTTP 1.0.
+        // 1. Anti-Caché
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.setHeader("Pragma", "no-cache");
         res.setDateHeader("Expires", 0);
 
-        // ========================================================================
-        // 2. LÓGICA DE SEGURIDAD (Igual que antes)
-        // ========================================================================
         String reqURI = req.getRequestURI();
         boolean esLogin = reqURI.contains("/index.xhtml");
         boolean esRecurso = reqURI.contains("/jakarta.faces.resource/");
 
+        // 2. Gestión de Login
         if (esLogin || esRecurso) {
-            // Si ya está logueado y quiere ir al login, lo mandamos adentro
             if (esLogin && userSession != null && userSession.isLoggedIn()) {
                 res.sendRedirect(req.getContextPath() + "/orden.xhtml");
             } else {
                 chain.doFilter(request, response);
             }
-        } else {
-            // Páginas protegidas
-            if (userSession != null && userSession.isLoggedIn()) {
-                // Tiene sesión -> PASE
-                chain.doFilter(request, response);
-            } else {
-                // No tiene sesión -> AL LOGIN
-                res.sendRedirect(req.getContextPath() + "/index.xhtml");
+            return;
+        }
+
+        // 3. Validar Sesión Activa
+        if (userSession == null || !userSession.isLoggedIn()) {
+            res.sendRedirect(req.getContextPath() + "/index.xhtml");
+            return;
+        }
+
+        // 4. CONTROL DE ROLES SIMPLIFICADO (ADMIN vs TECNICO)
+        String rol = userSession.getRolUsuario();
+        boolean accesoDenegado = false;
+
+        if ("TECNICO".equals(rol)) {
+            // El Técnico NO puede entrar a:
+            // - Usuarios (Seguridad)
+            // - Clientes (Administrativo)
+            // - Factura (Dinero/Caja)
+            if (reqURI.contains("/usuario.xhtml") ||
+                    reqURI.contains("/cliente.xhtml") ||
+                    reqURI.contains("/factura.xhtml")) {
+                accesoDenegado = true;
             }
+        }
+
+        // El ADMIN no tiene restricciones (entra al if solo si es tecnico y quiere entrar a zona prohibida)
+
+        if (accesoDenegado) {
+            // Rebotar al inicio operativo
+            res.sendRedirect(req.getContextPath() + "/orden.xhtml");
+        } else {
+            chain.doFilter(request, response);
         }
     }
 }
