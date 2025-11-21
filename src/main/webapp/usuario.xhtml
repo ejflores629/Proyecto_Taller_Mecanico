@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Gestión de Usuarios</title>
+    <style>
+        /* --- Mismos estilos que cliente.xhtml --- */
+        body { background-color: #f8f9fa; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #495057; }
+        .card-custom { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: 1px solid #eff2f5; transition: transform 0.2s ease; }
+        .card-custom:hover { transform: translateY(-3px); }
+        .section-title { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; display: flex; align-items: center; }
+        .section-title i { margin-right: 12px; color: #3b82f6; }
+        body .ui-inputfield { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ced4da; transition: border-color 0.3s, box-shadow 0.3s; }
+        body .ui-inputfield:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        body .ui-outputlabel { font-weight: 600; margin-bottom: 6px; display: block; color: #343a40; }
+        .custom-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; } /* 2 columnas para usuario se ve mejor */
+        @media (max-width: 768px) { .custom-grid { grid-template-columns: 1fr; } }
+        .btn-save { background-color: #28a745 !important; border-color: #28a745 !important; font-weight: bold; padding: 8px 20px; }
+        .btn-save:hover { background-color: #218838 !important; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
+        .id-badge { background-color: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
+        .role-badge { background-color: #fff3cd; color: #856404; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; }
+    </style>
+</h:head>
+
+<h:body>
+    <h:form id="formUsuarios">
+        <p:growl id="msgs" showDetail="true" life="4000"/>
+
+        <div class="card-custom">
+            <div class="section-title">
+                <i class="pi pi-user-plus"/> Registro de Nuevo Usuario
+            </div>
+
+            <p:messages id="msgCrear" showDetail="true" closable="true" showIcon="true">
+                <p:autoUpdate/>
+            </p:messages>
+
+            <div class="custom-grid">
+                <div class="field">
+                    <p:outputLabel for="newDoc" value="Documento Identidad" indicateRequired="true"/>
+                    <p:inputMask id="newDoc" value="#{usuarioBean.usuarioNuevo.doc_identidad}"
+                                 mask="9999-9999-99999" required="true"
+                                 requiredMessage="⚠️ El DNI es obligatorio."
+                                 placeholder="0801-1999-01234"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="newNom" value="Nombre Completo" indicateRequired="true"/>
+                    <p:inputText id="newNom" value="#{usuarioBean.usuarioNuevo.nombre_completo}"
+                                 required="true" requiredMessage="⚠️ El Nombre es obligatorio."
+                                 placeholder="Ej: Administrador Sistema"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="newClave" value="Contraseña" indicateRequired="true"/>
+                    <p:password id="newClave" value="#{usuarioBean.usuarioNuevo.clave}"
+                                required="true" requiredMessage="⚠️ La clave es obligatoria."
+                                toggleMask="true" redisplay="true"
+                                placeholder="******"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="newRol" value="Rol Asignado" indicateRequired="true"/>
+                    <p:selectOneMenu id="newRol" value="#{usuarioBean.usuarioNuevo.rol}" style="width:100%" required="true">
+                        <f:selectItem itemLabel="Seleccione un Rol" itemValue=""/>
+                        <f:selectItem itemLabel="Administrador" itemValue="ADMIN"/>
+                        <f:selectItem itemLabel="Técnico" itemValue="TECNICO"/>
+                        <f:selectItem itemLabel="Recepción" itemValue="RECEPCION"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; display: flex; gap: 15px;">
+                <p:commandButton value="Registrar Usuario" icon="pi pi-check-circle"
+                                 action="#{usuarioBean.guardarUsuario()}"
+                                 update="formUsuarios:dt-usuarios formUsuarios:msgCrear formUsuarios:msgs @parent"
+                                 validateClient="true"
+                                 styleClass="btn-save ui-button-raised">
+                    <p:resetInput target="formUsuarios"/>
+                </p:commandButton>
+
+                <p:commandButton value="Limpiar" icon="pi pi-eraser"
+                                 actionListener="#{usuarioBean.resetFormulario()}"
+                                 update="@form" process="@this"
+                                 styleClass="ui-button-secondary ui-button-outlined"/>
+            </div>
+        </div>
+
+        <div class="card-custom">
+            <div class="section-title">
+                <i class="pi pi-users"/> Base de Datos de Usuarios
+            </div>
+
+            <p:dataTable id="dt-usuarios" widgetVar="dtUsuarios" var="usuario"
+                         value="#{usuarioBean.usuariosLazy}" lazy="true"
+                         reflow="true" stripedRows="true" paginator="true" rows="5"
+                         paginatorPosition="bottom"
+                         rowKey="#{usuario.doc_identidad}"
+                         emptyMessage="No hay usuarios registrados.">
+
+                <p:column headerText="DNI / ID" width="20%">
+                    <span class="id-badge">#{usuario.doc_identidad}</span>
+                </p:column>
+
+                <p:column headerText="NOMBRE COMPLETO">
+                    <h:outputText value="#{usuario.nombre_completo}" style="font-weight: 600;"/>
+                </p:column>
+
+                <p:column headerText="ROL" width="15%" style="text-align: center;">
+                    <span class="role-badge">#{usuario.rol}</span>
+                </p:column>
+
+                <p:column headerText="OPCIONES" exportable="false" style="text-align: center; width: 130px;">
+                    <p:commandButton icon="pi pi-pencil" update=":formUsuarios:dlgEditar"
+                                     oncomplete="PF('dlgEditar').show()"
+                                     styleClass="rounded-button ui-button-warning ui-button-flat"
+                                     process="@this" title="Editar">
+                        <f:setPropertyActionListener value="#{usuario}" target="#{usuarioBean.usuarioSeleccionado}" />
+                    </p:commandButton>
+
+                    <p:commandButton icon="pi pi-trash" action="#{usuarioBean.eliminarUsuario(usuario)}"
+                                     update="dt-usuarios :formUsuarios:msgs"
+                                     styleClass="rounded-button ui-button-danger ui-button-flat"
+                                     process="@this" title="Eliminar">
+                        <p:confirm header="Confirmar" message="¿Eliminar a #{usuario.nombre_completo}?" icon="pi pi-exclamation-triangle"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+        </div>
+
+        <p:dialog id="dlgEditar" header="Actualizar Usuario" showEffect="fade" modal="true"
+                  widgetVar="dlgEditar" responsive="true" width="500px">
+
+            <p:outputPanel id="manage-user-content" class="ui-fluid" rendered="#{not empty usuarioBean.usuarioSeleccionado}">
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editDoc" value="Documento (No editable)"/>
+                    <p:inputText id="editDoc" value="#{usuarioBean.usuarioSeleccionado.doc_identidad}" readonly="true"
+                                 style="background-color: #e9ecef; font-weight: bold;"/>
+                </div>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editNom" value="Nombre Completo"/>
+                    <p:inputText id="editNom" value="#{usuarioBean.usuarioSeleccionado.nombre_completo}" required="true"/>
+                </div>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editClave" value="Clave (Dejar igual si no cambia)"/>
+                    <p:password id="editClave" value="#{usuarioBean.usuarioSeleccionado.clave}" toggleMask="true" redisplay="true"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="editRol" value="Rol"/>
+                    <p:selectOneMenu id="editRol" value="#{usuarioBean.usuarioSeleccionado.rol}">
+                        <f:selectItem itemLabel="Administrador" itemValue="ADMIN"/>
+                        <f:selectItem itemLabel="Técnico" itemValue="TECNICO"/>
+                        <f:selectItem itemLabel="Recepción" itemValue="RECEPCION"/>
+                    </p:selectOneMenu>
+                </div>
+            </p:outputPanel>
+
+            <f:facet name="footer">
+                <p:commandButton value="Guardar Cambios" icon="pi pi-save"
+                                 action="#{usuarioBean.guardarUsuario()}"
+                                 update="manage-user-content dt-usuarios msgs"
+                                 process="manage-user-content @this"
+                                 styleClass="btn-save"
+                                 oncomplete="if (!args.validationFailed) PF('dlgEditar').hide()"/>
+                <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgEditar').hide()"
+                                 styleClass="ui-button-secondary ui-button-text"/>
+            </f:facet>
+        </p:dialog>
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+            <p:commandButton value="Sí" type="button" styleClass="ui-confirmdialog-yes ui-button-danger" />
+        </p:confirmDialog>
+    </h:form>
+</h:body>
+</html>

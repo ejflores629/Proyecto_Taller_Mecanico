@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Inventario de Repuestos</title>
+    <style>
+        /* --- Estilos Globales (Consistentes) --- */
+        body { background-color: #f8f9fa; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #495057; }
+        .card-custom { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: 1px solid #eff2f5; transition: transform 0.2s ease; }
+        .card-custom:hover { transform: translateY(-3px); }
+        .section-title { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; display: flex; align-items: center; }
+        .section-title i { margin-right: 12px; color: #3b82f6; }
+        body .ui-inputfield { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ced4da; }
+        body .ui-inputfield:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        body .ui-outputlabel { font-weight: 600; margin-bottom: 6px; display: block; color: #343a40; }
+
+        /* Grid de 3 columnas */
+        .custom-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
+        @media (max-width: 992px) { .custom-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 768px) { .custom-grid { grid-template-columns: 1fr; } }
+
+        .btn-save { background-color: #28a745 !important; border-color: #28a745 !important; font-weight: bold; padding: 8px 20px; }
+        .btn-save:hover { background-color: #218838 !important; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
+
+        /* Badges específicos para Repuestos */
+        .sku-badge { background-color: #6c757d; color: #fff; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-weight: bold; font-size: 0.9rem; }
+        .stock-badge { background-color: #e3f2fd; color: #0d47a1; padding: 5px 10px; border-radius: 15px; font-weight: bold; font-size: 0.9rem; }
+        .price-text { color: #28a745; font-weight: 700; font-size: 1.1rem; }
+    </style>
+</h:head>
+
+<h:body>
+    <h:form id="formRepuestos">
+        <p:growl id="msgs" showDetail="true" life="4000"/>
+
+        <div class="card-custom">
+            <div class="section-title">
+                <i class="pi pi-box"/> Registro de Repuesto
+            </div>
+
+            <p:messages id="msgCrear" showDetail="true" closable="true" showIcon="true">
+                <p:autoUpdate/>
+            </p:messages>
+
+            <div class="custom-grid">
+                <div class="field">
+                    <p:outputLabel for="newSku" value="Código SKU (Único)" indicateRequired="true"/>
+                    <p:inputText id="newSku" value="#{repuestoBean.repuestoNuevo.codigo_sku}"
+                                 required="true" requiredMessage="⚠️ El SKU es obligatorio."
+                                 placeholder="Ej: FIL-OIL-001"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="newNom" value="Nombre del Repuesto" indicateRequired="true"/>
+                    <p:inputText id="newNom" value="#{repuestoBean.repuestoNuevo.nombre}"
+                                 required="true" requiredMessage="⚠️ El Nombre es obligatorio."
+                                 placeholder="Ej: Filtro de Aceite"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="newProv" value="Proveedor"/>
+                    <p:inputText id="newProv" value="#{repuestoBean.repuestoNuevo.proveedor}"
+                                 placeholder="Ej: Repuestos Sula"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="newPrecio" value="Precio Unitario (L.)" indicateRequired="true"/>
+                    <p:inputNumber id="newPrecio" value="#{repuestoBean.repuestoNuevo.precio_unitario}"
+                                   symbol="L. " symbolPosition="p" decimalSeparator="." thousandSeparator=","
+                                   required="true" requiredMessage="⚠️ El precio es requerido."
+                                   placeholder="0.00"/>
+                </div>
+
+                <div class="field">
+                    <p:outputLabel for="newStock" value="Stock Inicial" indicateRequired="true"/>
+                    <p:spinner id="newStock" value="#{repuestoBean.repuestoNuevo.stock_actual}"
+                               min="0" required="true" buttons="horizontal-after"
+                               stepFactor="1"/>
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; display: flex; gap: 15px;">
+                <p:commandButton value="Registrar Repuesto" icon="pi pi-check-circle"
+                                 action="#{repuestoBean.guardarRepuesto()}"
+                                 update="formRepuestos:dt-repuestos formRepuestos:msgCrear formRepuestos:msgs @parent"
+                                 validateClient="true"
+                                 styleClass="btn-save ui-button-raised">
+                    <p:resetInput target="formRepuestos"/>
+                </p:commandButton>
+
+                <p:commandButton value="Limpiar" icon="pi pi-eraser"
+                                 actionListener="#{repuestoBean.resetFormulario()}"
+                                 update="@form" process="@this"
+                                 styleClass="ui-button-secondary ui-button-outlined"/>
+            </div>
+        </div>
+
+        <div class="card-custom">
+            <div class="section-title">
+                <i class="pi pi-list"/> Catálogo de Repuestos
+            </div>
+
+            <p:dataTable id="dt-repuestos" widgetVar="dtRepuestos" var="repuesto"
+                         value="#{repuestoBean.repuestosLazy}" lazy="true"
+                         reflow="true" stripedRows="true" paginator="true" rows="5"
+                         paginatorPosition="bottom"
+                         rowKey="#{repuesto.codigo_sku}"
+                         emptyMessage="No hay repuestos registrados en inventario.">
+
+                <p:column headerText="SKU" width="15%" style="text-align: center;">
+                    <span class="sku-badge">#{repuesto.codigo_sku}</span>
+                </p:column>
+
+                <p:column headerText="NOMBRE Y PROVEEDOR">
+                    <h:outputText value="#{repuesto.nombre}" style="font-weight: 600; display:block;"/>
+                    <small style="color:#888;">Prov: #{repuesto.proveedor}</small>
+                </p:column>
+
+                <p:column headerText="PRECIO" width="15%" style="text-align: right;">
+                    <h:outputText value="#{repuesto.precio_unitario}" styleClass="price-text">
+                        <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
+                    </h:outputText>
+                </p:column>
+
+                <p:column headerText="STOCK" width="10%" style="text-align: center;">
+                    <span class="stock-badge">#{repuesto.stock_actual}</span>
+                </p:column>
+
+                <p:column headerText="OPCIONES" exportable="false" style="text-align: center; width: 130px;">
+                    <p:commandButton icon="pi pi-pencil" update=":formRepuestos:dlgEditar"
+                                     oncomplete="PF('dlgEditar').show()"
+                                     styleClass="rounded-button ui-button-warning ui-button-flat"
+                                     process="@this" title="Editar">
+                        <f:setPropertyActionListener value="#{repuesto}" target="#{repuestoBean.repuestoSeleccionado}" />
+                    </p:commandButton>
+
+                    <p:commandButton icon="pi pi-trash" action="#{repuestoBean.eliminarRepuesto(repuesto)}"
+                                     update="dt-repuestos :formRepuestos:msgs"
+                                     styleClass="rounded-button ui-button-danger ui-button-flat"
+                                     process="@this" title="Eliminar">
+                        <p:confirm header="Confirmar" message="¿Eliminar el repuesto #{repuesto.nombre}?" icon="pi pi-exclamation-triangle"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+        </div>
+
+        <p:dialog id="dlgEditar" header="Actualizar Repuesto" showEffect="fade" modal="true"
+                  widgetVar="dlgEditar" responsive="true" width="550px">
+
+            <p:outputPanel id="manage-part-content" class="ui-fluid" rendered="#{not empty repuestoBean.repuestoSeleccionado}">
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editSku" value="SKU (No editable)"/>
+                    <p:inputText id="editSku" value="#{repuestoBean.repuestoSeleccionado.codigo_sku}" readonly="true"
+                                 style="background-color: #e9ecef; font-weight: bold;"/>
+                </div>
+
+                <div class="field" style="margin-bottom: 15px;">
+                    <p:outputLabel for="editNom" value="Nombre"/>
+                    <p:inputText id="editNom" value="#{repuestoBean.repuestoSeleccionado.nombre}" required="true"/>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="field">
+                        <p:outputLabel for="editPrecio" value="Precio (L.)"/>
+                        <p:inputNumber id="editPrecio" value="#{repuestoBean.repuestoSeleccionado.precio_unitario}"
+                                       symbol="L. " symbolPosition="p" decimalSeparator="." thousandSeparator=","/>
+                    </div>
+                    <div class="field">
+                        <p:outputLabel for="editStock" value="Stock Actual"/>
+                        <p:spinner id="editStock" value="#{repuestoBean.repuestoSeleccionado.stock_actual}" min="0"/>
+                    </div>
+                </div>
+
+                <div class="field" style="margin-top: 15px;">
+                    <p:outputLabel for="editProv" value="Proveedor"/>
+                    <p:inputText id="editProv" value="#{repuestoBean.repuestoSeleccionado.proveedor}"/>
+                </div>
+            </p:outputPanel>
+
+            <f:facet name="footer">
+                <p:commandButton value="Guardar Cambios" icon="pi pi-save"
+                                 action="#{repuestoBean.guardarRepuesto()}"
+                                 update="manage-part-content dt-repuestos msgs"
+                                 process="manage-part-content @this"
+                                 styleClass="btn-save"
+                                 oncomplete="if (!args.validationFailed) PF('dlgEditar').hide()"/>
+                <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgEditar').hide()"
+                                 styleClass="ui-button-secondary ui-button-text"/>
+            </f:facet>
+        </p:dialog>
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+            <p:commandButton value="Sí, confirmar" type="button" styleClass="ui-confirmdialog-yes ui-button-danger" />
+        </p:confirmDialog>
+    </h:form>
+</h:body>
+</html>
