@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="jakarta.faces.facelets">
+
+<h:head>
+    <title>Facturación y Caja</title>
+    <style>
+        body { background-color: #f8f9fa; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #495057; }
+
+        /* Tarjetas */
+        .card-custom { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: 1px solid #eff2f5; transition: transform 0.2s ease; }
+        .card-custom:hover { transform: translateY(-3px); }
+
+        /* Títulos */
+        .section-title { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; display: flex; align-items: center; }
+        .section-title i { margin-right: 12px; color: #3b82f6; }
+
+        /* Inputs */
+        body .ui-inputfield { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ced4da; }
+        body .ui-inputfield:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+        body .ui-outputlabel { font-weight: 600; margin-bottom: 6px; display: block; color: #343a40; }
+
+        /* Grid Responsivo */
+        .custom-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; }
+        @media (max-width: 992px) { .custom-grid { grid-template-columns: 1fr; } }
+
+        /* Botones */
+        .btn-save { background-color: #28a745 !important; border-color: #28a745 !important; font-weight: bold; padding: 8px 20px; }
+        .btn-save:hover { background-color: #218838 !important; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
+
+        /* Panel de Totales */
+        .total-panel { background-color: #f8f9fa; border-radius: 8px; padding: 20px; border: 1px solid #e9ecef; height: 100%; }
+        .total-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 1.1rem; color: #555; }
+        .total-final { font-size: 1.6rem; font-weight: 800; color: #28a745; border-top: 2px solid #ddd; padding-top: 15px; margin-top: 15px; }
+
+        /* Badges de Estado */
+        .status-badge { padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold; color: #fff; text-transform: uppercase; }
+        .status-EMITIDA { background-color: #28a745; }
+        .status-ANULADA { background-color: #dc3545; }
+    </style>
+</h:head>
+
+<h:body>
+
+    <ui:include src="menu.xhtml" />
+
+    <h:form id="formFacturas">
+        <p:growl id="msgs" showDetail="true" life="4000" globalOnly="true"/>
+
+        <div class="card-custom">
+            <div class="section-title">
+                <i class="pi pi-wallet"/> Nueva Factura
+            </div>
+
+            <p:messages id="msgFac" showDetail="true" closable="true"><p:autoUpdate/></p:messages>
+
+            <div class="custom-grid">
+                <div>
+                    <div class="field" style="margin-bottom: 20px;">
+                        <p:outputLabel for="newFolio" value="Folio Factura" />
+                        <div class="ui-inputgroup">
+                            <p:commandButton icon="pi pi-refresh"
+                                             actionListener="#{facturaBean.generarNumeroFactura}"
+                                             process="@this"
+                                             update="newFolio"
+                                             styleClass="ui-button-warning"
+                                             title="Generar Siguiente Folio Disponible"/>
+                            <p:inputText id="newFolio" value="#{facturaBean.facturaNueva.numero_factura}"
+                                         readonly="true"
+                                         style="font-weight: bold; color: #00688C; font-size: 1.1rem;"/>
+                        </div>
+                        <small style="color:#888;">Haga clic en el botón para asignar un folio secuencial.</small>
+                    </div>
+
+                    <div class="field" style="margin-bottom: 20px;">
+                        <p:outputLabel for="selOrden" value="Orden a Facturar (Pendientes de Pago)" />
+                        <p:selectOneMenu id="selOrden" value="#{facturaBean.facturaNueva.numero_orden}"
+                                         style="width:100%" filter="true" filterMatchMode="contains"
+                                         required="true" requiredMessage="⚠️ Debe seleccionar una orden para facturar.">
+
+                            <f:selectItem itemLabel="-- Seleccione Orden --" itemValue=""/>
+                            <f:selectItems value="#{facturaBean.listaOrdenesPendientes}" var="o"
+                                           itemLabel="Orden: #{o.numero_orden} | Vehículo: #{o.vehiculo} | Cliente: #{o.cliente}"
+                                           itemValue="#{o.numero_orden}"/>
+
+                            <p:ajax listener="#{facturaBean.onOrdenSelect}" update="panelTotales"/>
+                        </p:selectOneMenu>
+                    </div>
+
+                    <div class="field">
+                        <p:outputLabel for="selPago" value="Método de Pago" />
+                        <p:selectOneMenu id="selPago" value="#{facturaBean.facturaNueva.metodo_pago}" style="width:100%">
+                            <f:selectItem itemLabel="Efectivo" itemValue="EFECTIVO"/>
+                            <f:selectItem itemLabel="Tarjeta de Crédito/Débito" itemValue="TARJETA"/>
+                            <f:selectItem itemLabel="Transferencia Bancaria" itemValue="TRANSFERENCIA"/>
+                            <f:selectItem itemLabel="Cheque" itemValue="CHEQUE"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+
+                <p:outputPanel id="panelTotales" styleClass="total-panel">
+                    <h3 style="margin-top:0; color:#00688C; text-align: center;">Resumen de Cobro</h3>
+                    <p:divider/>
+
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span>
+                            <h:outputText value="#{facturaBean.facturaNueva.subtotal}">
+                                <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
+                            </h:outputText>
+                        </span>
+                    </div>
+                    <div class="total-row">
+                        <span>Impuesto (15%):</span>
+                        <span>
+                            <h:outputText value="#{facturaBean.facturaNueva.impuesto}">
+                                <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
+                            </h:outputText>
+                        </span>
+                    </div>
+                    <div class="total-row total-final">
+                        <span>TOTAL A PAGAR:</span>
+                        <span>
+                            <h:outputText value="#{facturaBean.facturaNueva.total}">
+                                <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
+                            </h:outputText>
+                        </span>
+                    </div>
+
+                    <p:commandButton value="Emitir Factura" icon="pi pi-check-circle"
+                                     action="#{facturaBean.guardarFactura}"
+                                     update="formFacturas"
+                                     styleClass="btn-save ui-button-raised"
+                                     style="width:100%; margin-top: 25px; font-size: 1.2rem; height: 50px;">
+                        <p:confirm header="Confirmar Emisión"
+                                   message="¿Confirma el cobro y cierre de la orden? Esta acción generará el documento fiscal."
+                                   icon="pi pi-wallet"/>
+                    </p:commandButton>
+                </p:outputPanel>
+            </div>
+        </div>
+
+        <div class="card-custom">
+            <div class="section-title">
+                <i class="pi pi-history"/> Historial de Facturación
+            </div>
+
+            <p:dataTable id="dt-facturas" value="#{facturaBean.facturasLazy}" var="fac"
+                         lazy="true" paginator="true" rows="10" reflow="true"
+                         paginatorPosition="bottom" rowKey="#{fac.numero_factura}"
+                         emptyMessage="No se han emitido facturas.">
+
+                <p:column headerText="FOLIO" width="15%" sortBy="#{fac.numero_factura}">
+                    <span style="font-weight:bold; color:#00688C; font-family: monospace; font-size: 1rem;">
+                        #{fac.numero_factura}
+                    </span>
+                </p:column>
+
+                <p:column headerText="DETALLE ORDEN">
+                    <strong>#{fac.numero_orden}</strong>
+                    <br/>
+                    <small style="color: #666;">
+                        <i class="pi pi-user"/> #{fac.cliente} <br/>
+                        <i class="pi pi-car"/> #{fac.placa}
+                    </small>
+                </p:column>
+
+                <p:column headerText="FECHA" width="12%" style="text-align: center;" sortBy="#{fac.fecha_emision}">
+                    <h:outputText value="#{fac.fecha_emision}">
+                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                    </h:outputText>
+                </p:column>
+
+                <p:column headerText="TOTAL" width="12%" style="text-align: right; font-weight: bold;">
+                    <h:outputText value="#{fac.total}">
+                        <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
+                    </h:outputText>
+                </p:column>
+
+                <p:column headerText="ESTADO" width="10%" style="text-align: center;">
+                    <span class="status-badge status-#{fac.estado}">#{fac.estado}</span>
+                </p:column>
+
+                <p:column headerText="ACCIONES" width="100px" style="text-align: center;">
+                    <p:commandButton icon="pi pi-ban" title="Anular Factura"
+                                     action="#{facturaBean.anularFactura}"
+                                     process="@this"
+                                     update="dt-facturas :formFacturas:msgs"
+                                     styleClass="rounded-button ui-button-danger ui-button-flat"
+                                     disabled="#{fac.estado eq 'ANULADA'}">
+
+                        <f:setPropertyActionListener value="#{fac}" target="#{facturaBean.facturaSeleccionada}"/>
+
+                        <p:confirm header="Anular Documento"
+                                   message="¿Desea anular permanentemente la factura #{fac.numero_factura}? La orden quedará liberada para volver a facturarse."
+                                   icon="pi pi-exclamation-triangle"/>
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+        </div>
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="400">
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+            <p:commandButton value="Sí, Proceder" type="button" styleClass="ui-confirmdialog-yes ui-button-danger" />
+        </p:confirmDialog>
+
+    </h:form>
+</h:body>
+</html>

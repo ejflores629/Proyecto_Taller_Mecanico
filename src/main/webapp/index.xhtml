@@ -3,28 +3,140 @@
       xmlns:h="jakarta.faces.html"
       xmlns:f="jakarta.faces.core"
       xmlns:p="http://primefaces.org/ui">
+
 <h:head>
-    <title>Prueba Configuración</title>
+    <title>Bienvenido al Taller</title>
+    <style>
+        /* --- FONDO ANIMADO (ENGRANAJES ABSTRACTOS) --- */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1c2329 0%, #2c3e50 100%); /* Fondo oscuro elegante */
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Engranaje Grande Decorativo */
+        .gear-bg {
+            position: absolute;
+            border-radius: 50%;
+            border: 15px dashed rgba(255, 255, 255, 0.05);
+            animation: spin 60s linear infinite;
+            z-index: 0;
+        }
+        .gear-1 { width: 600px; height: 600px; top: -150px; right: -150px; border-width: 40px; }
+        .gear-2 { width: 400px; height: 400px; bottom: -100px; left: -100px; border-width: 30px; animation-direction: reverse; }
+        .gear-3 { width: 200px; height: 200px; top: 20%; left: 20%; border: 10px dashed rgba(59, 130, 246, 0.1); border-width: 20px; }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* --- TARJETA DE LOGIN --- */
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            z-index: 10;
+            border-top: 5px solid #3b82f6; /* Toque azul taller */
+            transform: translateY(0);
+            transition: transform 0.3s;
+        }
+        .login-card:hover { transform: translateY(-5px); }
+
+        .login-icon {
+            font-size: 3rem;
+            color: #3b82f6;
+            margin-bottom: 10px;
+            background: #eef2ff;
+            padding: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+        }
+
+        h2 { color: #1f2937; margin: 10px 0 30px 0; font-weight: 800; letter-spacing: -0.5px; }
+
+        /* Inputs PrimeFaces Custom */
+        body .ui-inputfield {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            box-shadow: none;
+            font-size: 1rem;
+            margin-bottom: 20px; /* Espacio entre inputs */
+        }
+        body .ui-inputfield:focus {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Botón */
+        .btn-login {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
+            border: none !important;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+            transition: all 0.2s;
+        }
+        .btn-login:hover {
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+            transform: scale(1.02);
+        }
+
+        .footer-text { margin-top: 25px; color: #6b7280; font-size: 0.9rem; }
+    </style>
 </h:head>
 
 <h:body>
+    <div class="gear-bg gear-1"></div>
+    <div class="gear-bg gear-2"></div>
+    <div class="gear-bg gear-3"></div>
+
     <h:form>
-        <p:card style="width: 25rem; margin-bottom: 2em">
-            <f:facet name="title">Login Taller</f:facet>
+        <p:growl id="msgs" showDetail="true" life="3000"/>
 
-            <p:outputLabel for="txtUser" value="Usuario"/>
-            <p:inputText id="txtUser" value="#{loginBean.usuario}" required="true"/>
+        <div class="login-card">
+            <div class="login-icon">
+                <i class="pi pi-wrench" style="animation: spin 10s linear infinite;"/>
+            </div>
 
-            <p:outputLabel for="txtPass" value="Password"/>
-            <p:password id="txtPass" value="#{loginBean.password}" required="true"/>
+            <h2>Taller Mecánico</h2>
 
-            <f:facet name="footer">
-                <p:commandButton icon="pi pi-check" value="Ingresar"
-                                 action="#{loginBean.ingresar}" update="@form"/>
-            </f:facet>
-        </p:card>
+            <span class="ui-float-label" style="margin-bottom: 25px; display: block;">
+                <p:inputText id="txtUser" value="#{loginBean.usuario}" required="true"
+                             requiredMessage="Ingrese su DNI"/>
+                <p:outputLabel for="txtUser" value="Usuario (DNI)"/>
+            </span>
 
-        <p:growl id="msgs" showDetail="true"/>
+            <span class="ui-float-label" style="margin-bottom: 25px; display: block;">
+                <p:password id="txtPass" value="#{loginBean.password}" required="true"
+                            requiredMessage="Ingrese su contraseña" toggleMask="true"/>
+                <p:outputLabel for="txtPass" value="Contraseña"/>
+            </span>
+
+            <p:commandButton value="Iniciar Sesión" icon="pi pi-sign-in"
+                             action="#{loginBean.ingresar}" update="msgs"
+                             styleClass="btn-login"/>
+
+            <div class="footer-text">
+                Sistema de Gestión Integral v1.0
+            </div>
+        </div>
     </h:form>
 </h:body>
 </html>

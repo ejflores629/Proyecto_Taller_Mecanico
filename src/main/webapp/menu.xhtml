@@ -1,0 +1,33 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="jakarta.faces.html"
+                xmlns:f="jakarta.faces.core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="jakarta.faces.facelets">
+
+    <h:form id="menuForm">
+        <p:menubar style="margin-bottom: 20px; border-radius: 8px; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+
+            <p:menuitem value="Inicio" icon="pi pi-home" outcome="index.xhtml"/>
+
+            <p:submenu label="Administración" icon="pi pi-cog">
+                <p:menuitem value="Usuarios" icon="pi pi-users" outcome="usuario.xhtml"/>
+                <p:menuitem value="Clientes" icon="pi pi-user" outcome="cliente.xhtml"/>
+            </p:submenu>
+
+            <p:submenu label="Taller" icon="pi pi-wrench">
+                <p:menuitem value="Vehículos" icon="pi pi-car" outcome="vehiculo.xhtml"/>
+                <p:menuitem value="Repuestos" icon="pi pi-box" outcome="repuesto.xhtml"/>
+                <p:divider />
+                <p:menuitem value="Órdenes de Trabajo" icon="pi pi-list" outcome="orden.xhtml"/>
+            </p:submenu>
+
+            <p:menuitem value="Caja / Facturación" icon="pi pi-wallet" outcome="factura.xhtml"
+                        style="font-weight: bold; color: #28a745;"/>
+
+            <f:facet name="options">
+                <p:button value="Salir" icon="pi pi-power-off" styleClass="ui-button-flat ui-button-danger" style="font-size: 0.9rem;" outcome="index.xhtml"/>
+            </f:facet>
+        </p:menubar>
+    </h:form>
+
+</ui:composition>
