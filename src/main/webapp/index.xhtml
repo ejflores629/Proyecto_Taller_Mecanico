@@ -5,66 +5,94 @@
       xmlns:p="http://primefaces.org/ui">
 
 <h:head>
-    <title>Bienvenido al Taller</title>
+    <title>Acceso al Taller</title>
     <style>
-        /* --- FONDO ANIMADO (ENGRANAJES ABSTRACTOS) --- */
+        /* --- ESTILOS Y ANIMACIONES --- */
         body {
             margin: 0;
             padding: 0;
             height: 100vh;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #1c2329 0%, #2c3e50 100%); /* Fondo oscuro elegante */
+            /* Fondo oscuro profesional */
+            background: linear-gradient(135deg, #1c2329 0%, #2c3e50 100%);
             overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* Engranaje Grande Decorativo */
+        /* Animación de rotación para los engranajes de fondo */
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes spin-reverse { 100% { transform: rotate(-360deg); } }
+
+        /* Engranajes Decorativos (CSS Puro) */
         .gear-bg {
             position: absolute;
             border-radius: 50%;
-            border: 15px dashed rgba(255, 255, 255, 0.05);
-            animation: spin 60s linear infinite;
+            border: 15px dashed rgba(255, 255, 255, 0.05); /* Efecto de dientes de engranaje */
             z-index: 0;
         }
-        .gear-1 { width: 600px; height: 600px; top: -150px; right: -150px; border-width: 40px; }
-        .gear-2 { width: 400px; height: 400px; bottom: -100px; left: -100px; border-width: 30px; animation-direction: reverse; }
-        .gear-3 { width: 200px; height: 200px; top: 20%; left: 20%; border: 10px dashed rgba(59, 130, 246, 0.1); border-width: 20px; }
-
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .gear-1 {
+            width: 600px; height: 600px;
+            top: -150px; right: -150px;
+            border-width: 40px;
+            animation: spin 60s linear infinite;
+        }
+        .gear-2 {
+            width: 400px; height: 400px;
+            bottom: -100px; left: -100px;
+            border-width: 30px;
+            animation: spin-reverse 45s linear infinite;
+        }
+        .gear-3 {
+            width: 200px; height: 200px;
+            top: 20%; left: 20%;
+            border: 10px dashed rgba(59, 130, 246, 0.1);
+            border-width: 20px;
+            animation: spin 30s linear infinite;
+        }
 
         /* --- TARJETA DE LOGIN --- */
         .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px); /* Efecto cristal */
+            padding: 45px 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             text-align: center;
             z-index: 10;
-            border-top: 5px solid #3b82f6; /* Toque azul taller */
-            transform: translateY(0);
-            transition: transform 0.3s;
+            border-top: 6px solid #3b82f6; /* Borde azul superior */
+            position: relative;
         }
-        .login-card:hover { transform: translateY(-5px); }
 
         .login-icon {
-            font-size: 3rem;
+            font-size: 3.5rem;
             color: #3b82f6;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            /* Círculo detrás del icono */
             background: #eef2ff;
-            padding: 20px;
+            width: 90px;
+            height: 90px;
+            line-height: 90px;
             border-radius: 50%;
             display: inline-block;
             box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
         }
 
-        h2 { color: #1f2937; margin: 10px 0 30px 0; font-weight: 800; letter-spacing: -0.5px; }
+        h2 {
+            color: #1f2937;
+            margin: 0 0 30px 0;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            font-size: 1.5rem;
+        }
 
-        /* Inputs PrimeFaces Custom */
+        /* Inputs personalizados */
+        .input-wrapper { margin-bottom: 25px; text-align: left; }
+
         body .ui-inputfield {
             width: 100%;
             padding: 12px 15px;
@@ -73,32 +101,46 @@
             border: 1px solid #e5e7eb;
             box-shadow: none;
             font-size: 1rem;
-            margin-bottom: 20px; /* Espacio entre inputs */
+            transition: all 0.3s;
         }
         body .ui-inputfield:focus {
             border-color: #3b82f6;
             background: #fff;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+        }
+        body .ui-outputlabel {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #4b5563;
+            margin-bottom: 5px;
+            display: block;
         }
 
         /* Botón */
         .btn-login {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             font-size: 1.1rem;
             font-weight: bold;
             background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
             border: none !important;
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-            transition: all 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
         }
         .btn-login:hover {
             box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
-            transform: scale(1.02);
+            transform: translateY(-2px);
         }
 
-        .footer-text { margin-top: 25px; color: #6b7280; font-size: 0.9rem; }
+        .footer-text {
+            margin-top: 30px;
+            color: #9ca3af;
+            font-size: 0.85rem;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
     </style>
 </h:head>
 
@@ -112,22 +154,24 @@
 
         <div class="login-card">
             <div class="login-icon">
-                <i class="pi pi-wrench" style="animation: spin 10s linear infinite;"/>
+                <i class="pi pi-wrench" style="display: inline-block; transition: transform 0.5s;"/>
             </div>
 
             <h2>Taller Mecánico</h2>
 
-            <span class="ui-float-label" style="margin-bottom: 25px; display: block;">
+            <div class="input-wrapper">
+                <p:outputLabel for="txtUser" value="Documento de Identidad"/>
                 <p:inputText id="txtUser" value="#{loginBean.usuario}" required="true"
-                             requiredMessage="Ingrese su DNI"/>
-                <p:outputLabel for="txtUser" value="Usuario (DNI)"/>
-            </span>
+                             requiredMessage="El usuario es requerido"
+                             placeholder="Ej. 0801-1990-12345"/>
+            </div>
 
-            <span class="ui-float-label" style="margin-bottom: 25px; display: block;">
-                <p:password id="txtPass" value="#{loginBean.password}" required="true"
-                            requiredMessage="Ingrese su contraseña" toggleMask="true"/>
+            <div class="input-wrapper">
                 <p:outputLabel for="txtPass" value="Contraseña"/>
-            </span>
+                <p:password id="txtPass" value="#{loginBean.password}" required="true"
+                            requiredMessage="La contraseña es requerida"
+                            placeholder="••••••••" toggleMask="true"/>
+            </div>
 
             <p:commandButton value="Iniciar Sesión" icon="pi pi-sign-in"
                              action="#{loginBean.ingresar}" update="msgs"
@@ -135,6 +179,7 @@
 
             <div class="footer-text">
                 Sistema de Gestión Integral v1.0
+                <br/>Acceso exclusivo para personal autorizado
             </div>
         </div>
     </h:form>

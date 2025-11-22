@@ -13,13 +13,9 @@
         .section-title { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; display: flex; align-items: center; }
         .section-title i { margin-right: 12px; color: #3b82f6; }
         body .ui-inputfield { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ced4da; }
-        body .ui-inputfield:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
-        body .ui-outputlabel { font-weight: 600; margin-bottom: 6px; display: block; color: #343a40; }
-
         .custom-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
         @media (max-width: 992px) { .custom-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { .custom-grid { grid-template-columns: 1fr; } }
-
         .btn-save { background-color: #28a745 !important; border-color: #28a745 !important; font-weight: bold; padding: 8px 20px; }
         .placa-badge { background-color: #343a40; color: #fff; padding: 4px 8px; border-radius: 4px; font-family: monospace; font-weight: bold; border: 2px solid #adb5bd; }
         .marca-text { color: #495057; font-weight: 700; }
@@ -28,6 +24,7 @@
 
 <h:body>
     <ui:include src="menu.xhtml" />
+
     <h:form id="formVehiculos">
         <p:growl id="msgs" showDetail="true" life="4000" globalOnly="true"/>
 
@@ -35,10 +32,7 @@
             <div class="section-title">
                 <i class="pi pi-car"/> Registro de Vehículo
             </div>
-
-            <p:messages id="msgCrear" showDetail="true" closable="true" showIcon="true">
-                <p:autoUpdate/>
-            </p:messages>
+            <p:messages id="msgCrear" showDetail="true" closable="true"><p:autoUpdate/></p:messages>
 
             <div style="margin-bottom: 20px; text-align: center;">
                 <p:selectOneButton value="#{vehiculoBean.tipoVehiculoSel}">
@@ -57,50 +51,42 @@
                         <f:validateLength minimum="3" maximum="10"/>
                     </p:inputText>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="newCliente" value="Propietario" indicateRequired="true"/>
                     <p:selectOneMenu id="newCliente" value="#{vehiculoBean.vehiculoNuevo.doc_cliente}"
-                                     required="true" requiredMessage="⚠️ Seleccione un cliente."
-                                     style="width:100%" filter="true" filterMatchMode="contains">
+                                     required="true" filter="true" filterMatchMode="contains" style="width:100%">
                         <f:selectItem itemLabel="-- Cliente --" itemValue=""/>
                         <f:selectItems value="#{vehiculoBean.listaClientes}" var="cli"
                                        itemLabel="#{cli.nombre} (#{cli.doc_identidad})" itemValue="#{cli.doc_identidad}"/>
                     </p:selectOneMenu>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="comboMarca" value="Marca"/>
                     <p:selectOneMenu id="comboMarca" value="#{vehiculoBean.vehiculoNuevo.marca}"
-                                     style="width:100%" filter="true" required="true" requiredMessage="Marca requerida">
+                                     filter="true" required="true" style="width:100%">
                         <f:selectItem itemLabel="-- Seleccione --" itemValue=""/>
                         <f:selectItems value="#{vehiculoBean.listaMarcas}"/>
                         <p:ajax listener="#{vehiculoBean.onMarcaChange}" update="comboModelo"/>
                     </p:selectOneMenu>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="comboModelo" value="Modelo"/>
                     <p:selectOneMenu id="comboModelo" value="#{vehiculoBean.vehiculoNuevo.modelo}"
-                                     style="width:100%" filter="true" editable="true"
-                                     required="true" requiredMessage="Modelo requerido">
+                                     filter="true" editable="true" required="true" style="width:100%">
                         <f:selectItem itemLabel="-- Seleccione o Escriba --" itemValue=""/>
                         <f:selectItems value="#{vehiculoBean.listaModelos}"/>
                     </p:selectOneMenu>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="newColor" value="Color"/>
-                    <p:selectOneMenu id="newColor" value="#{vehiculoBean.vehiculoNuevo.color}"
-                                     style="width:100%" filter="true">
+                    <p:selectOneMenu id="newColor" value="#{vehiculoBean.vehiculoNuevo.color}" filter="true" style="width:100%">
                         <f:selectItem itemLabel="-- Color --" itemValue=""/>
                         <f:selectItems value="#{vehiculoBean.listaColores}"/>
                     </p:selectOneMenu>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="newAnio" value="Año"/>
-                    <p:selectOneMenu id="newAnio" value="#{vehiculoBean.vehiculoNuevo.anio}" required="true">
+                    <p:selectOneMenu id="newAnio" value="#{vehiculoBean.vehiculoNuevo.anio}" required="true" style="width:100%">
                         <f:selectItem itemLabel="-- Año --" itemValue=""/>
                         <f:selectItems value="#{vehiculoBean.listaAnios}"/>
                     </p:selectOneMenu>
@@ -114,7 +100,6 @@
                                  validateClient="true" styleClass="btn-save ui-button-raised">
                     <p:resetInput target="formVehiculos"/>
                 </p:commandButton>
-
                 <p:commandButton value="Limpiar" icon="pi pi-eraser"
                                  actionListener="#{vehiculoBean.resetFormulario()}"
                                  update="@form" process="@this"
@@ -123,7 +108,12 @@
         </div>
 
         <div class="card-custom">
-            <div class="section-title"><i class="pi pi-list"/> Flota de Vehículos</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e9ecef; padding-bottom:10px; margin-bottom:1.5rem;">
+                <div class="section-title" style="border:none; margin:0; padding:0;">
+                    <i class="pi pi-list"/> Flota de Vehículos
+                </div>
+                <p:button value="Ir a Órdenes" icon="pi pi-arrow-right" outcome="orden.xhtml" iconPos="right"/>
+            </div>
 
             <p:dataTable id="dt-vehiculos" widgetVar="dtVehiculos" var="vehiculo"
                          value="#{vehiculoBean.vehiculosLazy}" lazy="true"
@@ -134,17 +124,14 @@
                 <p:column headerText="PLACA" width="15%" style="text-align: center;">
                     <span class="placa-badge">#{vehiculo.placa}</span>
                 </p:column>
-
                 <p:column headerText="VEHÍCULO">
                     <h:outputText value="#{vehiculo.marca} #{vehiculo.modelo}" styleClass="marca-text"/>
                     <br/> <small style="color:#888;">#{vehiculo.color} - #{vehiculo.anio}</small>
                 </p:column>
-
                 <p:column headerText="PROPIETARIO">
                     <i class="pi pi-user" style="color: #3b82f6; margin-right: 5px;"/>
                     <h:outputText value="#{vehiculo.nombre_cliente}" style="font-weight: 500;"/>
                 </p:column>
-
                 <p:column headerText="OPCIONES" exportable="false" style="text-align: center; width: 130px;">
                     <p:commandButton icon="pi pi-pencil" update=":formVehiculos:dlgEditar"
                                      oncomplete="PF('dlgEditar').show()"
@@ -153,7 +140,6 @@
                         <f:setPropertyActionListener value="#{vehiculo}" target="#{vehiculoBean.vehiculoSeleccionado}" />
                         <f:actionListener binding="#{vehiculoBean.prepararEdicion(vehiculo)}" />
                     </p:commandButton>
-
                     <p:commandButton icon="pi pi-trash" action="#{vehiculoBean.eliminarVehiculo(vehiculo)}"
                                      update="dt-vehiculos :formVehiculos:msgs"
                                      styleClass="rounded-button ui-button-danger ui-button-flat"
@@ -166,24 +152,21 @@
 
         <p:dialog id="dlgEditar" header="Actualizar Vehículo" showEffect="fade" modal="true"
                   widgetVar="dlgEditar" responsive="true" width="600px">
-
             <p:outputPanel id="manage-car-content" class="ui-fluid" rendered="#{not empty vehiculoBean.vehiculoSeleccionado}">
                 <p:messages id="msgEdit" showDetail="true" closable="true"><p:autoUpdate/></p:messages>
 
                 <div style="margin-bottom: 15px; text-align: center;">
-                    <p:selectOneButton value="#{vehiculoBean.tipoVehiculoSel}">
+                    <p:selectOneButton value="#{vehiculoBean.tipoVehiculoSel}" disabled="true">
                         <f:selectItem itemLabel="🚗 Carro" itemValue="CARRO"/>
                         <f:selectItem itemLabel="🏍️ Moto" itemValue="MOTO"/>
-                        <p:ajax listener="#{vehiculoBean.onTipoChange}" update="editMarca editModelo"/>
                     </p:selectOneButton>
                 </div>
 
                 <div class="field" style="margin-bottom: 15px;">
-                    <p:outputLabel for="editPlaca" value="Placa (No editable)"/>
+                    <p:outputLabel for="editPlaca" value="Placa (Fijo)"/>
                     <p:inputText id="editPlaca" value="#{vehiculoBean.vehiculoSeleccionado.placa}" readonly="true"
                                  style="background-color: #e9ecef; font-weight: bold;"/>
                 </div>
-
                 <div class="field" style="margin-bottom: 15px;">
                     <p:outputLabel for="editCliente" value="Propietario"/>
                     <p:selectOneMenu id="editCliente" value="#{vehiculoBean.vehiculoSeleccionado.doc_cliente}"
@@ -192,21 +175,14 @@
                                        itemLabel="#{cli.nombre}" itemValue="#{cli.doc_identidad}"/>
                     </p:selectOneMenu>
                 </div>
-
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div class="field">
-                        <p:outputLabel for="editMarca" value="Marca"/>
-                        <p:selectOneMenu id="editMarca" value="#{vehiculoBean.vehiculoSeleccionado.marca}" filter="true">
-                            <f:selectItems value="#{vehiculoBean.listaMarcas}"/>
-                            <p:ajax listener="#{vehiculoBean.onMarcaChange}" update="editModelo"/>
-                        </p:selectOneMenu>
+                        <p:outputLabel for="editMarca" value="Marca (Fijo)"/>
+                        <p:inputText id="editMarca" value="#{vehiculoBean.vehiculoSeleccionado.marca}" readonly="true" style="background-color: #e9ecef;"/>
                     </div>
                     <div class="field">
-                        <p:outputLabel for="editModelo" value="Modelo"/>
-                        <p:selectOneMenu id="editModelo" value="#{vehiculoBean.vehiculoSeleccionado.modelo}"
-                                         filter="true" editable="true">
-                            <f:selectItems value="#{vehiculoBean.listaModelos}"/>
-                        </p:selectOneMenu>
+                        <p:outputLabel for="editModelo" value="Modelo (Fijo)"/>
+                        <p:inputText id="editModelo" value="#{vehiculoBean.vehiculoSeleccionado.modelo}" readonly="true" style="background-color: #e9ecef;"/>
                     </div>
                     <div class="field">
                         <p:outputLabel for="editColor" value="Color"/>
@@ -222,7 +198,6 @@
                     </div>
                 </div>
             </p:outputPanel>
-
             <f:facet name="footer">
                 <p:commandButton value="Guardar Cambios" icon="pi pi-save"
                                  action="#{vehiculoBean.guardarVehiculo()}"

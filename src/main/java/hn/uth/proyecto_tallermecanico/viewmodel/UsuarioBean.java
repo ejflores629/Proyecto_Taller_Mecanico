@@ -2,6 +2,7 @@ package hn.uth.proyecto_tallermecanico.viewmodel;
 
 import hn.uth.proyecto_tallermecanico.model.Usuario;
 import hn.uth.proyecto_tallermecanico.repository.UsuarioRepository;
+import hn.uth.proyecto_tallermecanico.util.CifradoUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
@@ -72,14 +73,29 @@ public class UsuarioBean implements Serializable {
 
     public void guardarUsuario() {
         try {
-            // LÓGICA CORREGIDA: Separamos explícitamente Edición vs Creación
+            // 1. CASO EDICIÓN
             if (this.usuarioSeleccionado != null && this.usuarioSeleccionado.getDoc_identidad() != null) {
-                // EDICIÓN -> Llamamos a update()
+
+                // Verificar si cambió la clave (si el campo no está vacío)
+                String nuevaClave = this.usuarioSeleccionado.getClave();
+                if (nuevaClave != null && !nuevaClave.trim().isEmpty()) {
+                    // CIFRADO DIDÁCTICO: Encriptamos antes de mandar al repo
+                    String claveCifrada = CifradoUtil.cifrar(nuevaClave);
+                    this.usuarioSeleccionado.setClave(claveCifrada);
+                } else {
+                    // Si está vacía, seteamos NULL para que el Repo use el NVL y no la borre
+                    this.usuarioSeleccionado.setClave(null);
+                }
+
                 usuarioRepository.update(this.usuarioSeleccionado);
                 addMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario actualizado correctamente.");
                 this.usuarioSeleccionado = null;
-            } else {
-                // CREACIÓN -> Llamamos a create()
+            }
+            else {
+                String clavePlana = this.usuarioNuevo.getClave();
+                String claveCifrada = CifradoUtil.cifrar(clavePlana);
+                this.usuarioNuevo.setClave(claveCifrada);
+
                 usuarioRepository.create(this.usuarioNuevo);
                 addMessage(FacesMessage.SEVERITY_INFO, "Éxito", "Usuario creado correctamente.");
                 this.usuarioNuevo = new Usuario();

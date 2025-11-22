@@ -8,85 +8,58 @@
 <h:head>
     <title>Gestión de Clientes</title>
     <style>
-        /* --- ESTILOS GENERALES (Mismos que Usuario/Repuesto) --- */
         body { background-color: #f8f9fa; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #495057; }
-        .card-custom { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: 1px solid #eff2f5; transition: transform 0.2s ease; }
-        .card-custom:hover { transform: translateY(-3px); }
+        .card-custom { background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: 1px solid #eff2f5; }
         .section-title { font-size: 1.4rem; font-weight: 700; color: #2c3e50; margin-bottom: 1.5rem; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; display: flex; align-items: center; }
         .section-title i { margin-right: 12px; color: #3b82f6; }
-        body .ui-inputfield { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ced4da; transition: border-color 0.3s, box-shadow 0.3s; }
-        body .ui-inputfield:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
-        body .ui-outputlabel { font-weight: 600; margin-bottom: 6px; display: block; color: #343a40; }
+        body .ui-inputfield { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ced4da; }
         .custom-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; }
         @media (max-width: 992px) { .custom-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 768px) { .custom-grid { grid-template-columns: 1fr; } }
         .span-2 { grid-column: span 2; }
         @media (max-width: 992px) { .span-2 { grid-column: span 1; } }
         .btn-save { background-color: #28a745 !important; border-color: #28a745 !important; font-weight: bold; padding: 8px 20px; }
-        .btn-save:hover { background-color: #218838 !important; box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3); }
         .id-badge { background-color: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
     </style>
 </h:head>
 
 <h:body>
     <ui:include src="menu.xhtml" />
+
     <h:form id="formClientes">
-        <p:growl id="msgs" showDetail="true" life="4000"/>
+        <p:growl id="msgs" showDetail="true" life="4000" globalOnly="true"/>
 
         <div class="card-custom">
-            <div class="section-title">
-                <i class="pi pi-user-plus"/> Registro de Nuevo Cliente
-            </div>
-
-            <p:messages id="msgCrear" showDetail="true" closable="true" showIcon="true">
-                <p:autoUpdate/>
-            </p:messages>
+            <div class="section-title"><i class="pi pi-user-plus"/> Registro de Nuevo Cliente</div>
+            <p:messages id="msgCrear" showDetail="true" closable="true"><p:autoUpdate/></p:messages>
 
             <div class="custom-grid">
-
                 <div class="field">
                     <p:outputLabel for="newDoc" value="Documento Identidad" indicateRequired="true"/>
                     <p:inputMask id="newDoc" value="#{clienteBean.clienteNuevo.doc_identidad}"
-                                 mask="9999-9999-99999"
-                                 required="true" requiredMessage="⚠️ El DNI es obligatorio."
-                                 placeholder="0801-1999-01234" validateMask="true"/>
+                                 mask="9999-9999-99999" required="true" requiredMessage="⚠️ El DNI es obligatorio."
+                                 placeholder="0801-1999-01234"/>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="newNom" value="Nombre Completo" indicateRequired="true"/>
                     <p:inputText id="newNom" value="#{clienteBean.clienteNuevo.nombre}"
-                                 required="true" requiredMessage="⚠️ El Nombre es obligatorio."
-                                 validatorMessage="⚠️ El nombre no puede contener números."
-                                 placeholder="Ej: Juan Pérez">
-
-                        <f:validateLength minimum="3"/>
-                        <f:validateRegex pattern="^[^0-9]+$" />
-                        <p:keyFilter regEx="/[^0-9]/i"/>
+                                 required="true" requiredMessage="⚠️ El Nombre es obligatorio.">
+                        <f:validateRegex pattern="^[^0-9]+$" /> <p:keyFilter regEx="/[^0-9]/i"/>
                     </p:inputText>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="newTel" value="Teléfono"/>
-                    <p:inputText id="newTel" value="#{clienteBean.clienteNuevo.telefono}"
-                                 placeholder="Ej: 99887766">
-                        <p:keyFilter mask="num"/> <f:validateLength minimum="8" maximum="15"/>
+                    <p:inputText id="newTel" value="#{clienteBean.clienteNuevo.telefono}" placeholder="Ej: 99887766">
+                        <p:keyFilter mask="num"/>
                     </p:inputText>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="newMail" value="Correo Electrónico"/>
-                    <p:inputText id="newMail" value="#{clienteBean.clienteNuevo.correo}"
-                                 placeholder="usuario@ejemplo.com"
-                                 validatorMessage="⚠️ Formato de correo inválido.">
-                        <f:validateRegex pattern="^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$" />
-                    </p:inputText>
+                    <p:inputText id="newMail" value="#{clienteBean.clienteNuevo.correo}" placeholder="usuario@ejemplo.com"/>
                 </div>
-
                 <div class="field span-2">
                     <p:outputLabel for="newDir" value="Dirección"/>
-                    <p:inputTextarea id="newDir" value="#{clienteBean.clienteNuevo.direccion}"
-                                     rows="1" autoResize="false"
-                                     placeholder="Ej: Col. Los Próceres, Casa 22"/>
+                    <p:inputTextarea id="newDir" value="#{clienteBean.clienteNuevo.direccion}" rows="1"/>
                 </div>
             </div>
 
@@ -94,11 +67,9 @@
                 <p:commandButton value="Registrar Cliente" icon="pi pi-check-circle"
                                  action="#{clienteBean.guardarCliente()}"
                                  update="formClientes:dt-clientes formClientes:msgCrear formClientes:msgs @parent"
-                                 validateClient="true"
-                                 styleClass="btn-save ui-button-raised">
+                                 validateClient="true" styleClass="btn-save ui-button-raised">
                     <p:resetInput target="formClientes"/>
                 </p:commandButton>
-
                 <p:commandButton value="Limpiar" icon="pi pi-eraser"
                                  actionListener="#{clienteBean.resetFormulario()}"
                                  update="@form" process="@this"
@@ -107,49 +78,35 @@
         </div>
 
         <div class="card-custom">
-            <div class="section-title">
-                <i class="pi pi-list"/> Base de Datos de Clientes
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e9ecef; padding-bottom:10px; margin-bottom:1.5rem;">
+                <div class="section-title" style="border:none; margin:0; padding:0;">
+                    <i class="pi pi-list"/> Base de Datos de Clientes
+                </div>
+                <p:button value="Ir a Vehículos" icon="pi pi-arrow-right" outcome="vehiculo.xhtml" iconPos="right"/>
             </div>
 
             <p:dataTable id="dt-clientes" widgetVar="dtClientes" var="cliente"
                          value="#{clienteBean.clientesLazy}" lazy="true"
                          reflow="true" stripedRows="true" paginator="true" rows="3"
-                         paginatorPosition="bottom"
-                         rowKey="#{cliente.doc_identidad}"
-                         emptyMessage="No hay registros disponibles en la base de datos.">
+                         paginatorPosition="bottom" rowKey="#{cliente.doc_identidad}"
+                         emptyMessage="No hay registros disponibles.">
 
-                <p:column headerText="DNI / ID" width="18%">
-                    <span class="id-badge">#{cliente.doc_identidad}</span>
-                </p:column>
-
-                <p:column headerText="NOMBRE COMPLETO">
-                    <h:outputText value="#{cliente.nombre}" style="font-weight: 600;"/>
-                </p:column>
-
-                <p:column headerText="TELÉFONO" width="12%">
-                    <i class="pi pi-phone" style="font-size: 0.8rem; margin-right:5px; color:#888;"/>
-                    <h:outputText value="#{cliente.telefono}" />
-                </p:column>
-
-                <p:column headerText="CORREO">
-                    <h:outputText value="#{cliente.correo}" />
-                </p:column>
-
+                <p:column headerText="DNI / ID" width="18%"><span class="id-badge">#{cliente.doc_identidad}</span></p:column>
+                <p:column headerText="NOMBRE"><h:outputText value="#{cliente.nombre}" style="font-weight: 600;"/></p:column>
+                <p:column headerText="TELÉFONO"><h:outputText value="#{cliente.telefono}" /></p:column>
+                <p:column headerText="CORREO"><h:outputText value="#{cliente.correo}" /></p:column>
                 <p:column headerText="OPCIONES" exportable="false" style="text-align: center; width: 130px;">
                     <p:commandButton icon="pi pi-pencil" update=":formClientes:dlgEditar"
                                      oncomplete="PF('dlgEditar').show()"
                                      styleClass="rounded-button ui-button-warning ui-button-flat"
-                                     process="@this" title="Editar registro">
+                                     process="@this">
                         <f:setPropertyActionListener value="#{cliente}" target="#{clienteBean.clienteSeleccionado}" />
                     </p:commandButton>
-
                     <p:commandButton icon="pi pi-trash" action="#{clienteBean.eliminarCliente(cliente)}"
                                      update="dt-clientes :formClientes:msgs"
                                      styleClass="rounded-button ui-button-danger ui-button-flat"
-                                     process="@this" title="Desactivar cliente">
-                        <p:confirm header="Confirmar Desactivación"
-                                   message="¿Seguro que desea eliminar a #{cliente.nombre}?"
-                                   icon="pi pi-exclamation-triangle"/>
+                                     process="@this">
+                        <p:confirm header="Confirmar" message="¿Eliminar?" icon="pi pi-exclamation-triangle"/>
                     </p:commandButton>
                 </p:column>
             </p:dataTable>
@@ -157,55 +114,40 @@
 
         <p:dialog id="dlgEditar" header="Actualizar Datos" showEffect="fade" modal="true"
                   widgetVar="dlgEditar" responsive="true" width="550px">
-
             <p:outputPanel id="manage-product-content" class="ui-fluid" rendered="#{not empty clienteBean.clienteSeleccionado}">
+                <p:messages id="msgEdit" showDetail="true" closable="true"><p:autoUpdate/></p:messages>
+
                 <div class="field" style="margin-bottom: 15px;">
                     <p:outputLabel for="editDoc" value="Documento (No editable)"/>
-                    <p:inputText id="editDoc" value="#{clienteBean.clienteSeleccionado.doc_identidad}" readonly="true"
-                                 style="background-color: #e9ecef; color: #495057; font-weight: bold;"/>
+                    <p:inputText id="editDoc" value="#{clienteBean.clienteSeleccionado.doc_identidad}" readonly="true" style="background-color: #e9ecef; font-weight: bold;"/>
                 </div>
-
                 <div class="field" style="margin-bottom: 15px;">
-                    <p:outputLabel for="editNom" value="Nombre Completo" indicateRequired="true"/>
-                    <p:inputText id="editNom" value="#{clienteBean.clienteSeleccionado.nombre}"
-                                 required="true" requiredMessage="⚠️ Nombre requerido."
-                                 validatorMessage="⚠️ El nombre no puede contener números.">
-
-                        <f:validateRegex pattern="^[^0-9]+$" />
-                        <p:keyFilter regEx="/[^0-9]/i"/>
+                    <p:outputLabel for="editNom" value="Nombre"/>
+                    <p:inputText id="editNom" value="#{clienteBean.clienteSeleccionado.nombre}" required="true">
+                        <f:validateRegex pattern="^[^0-9]+$" /> <p:keyFilter regEx="/[^0-9]/i"/>
                     </p:inputText>
                 </div>
-
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div class="field">
                         <p:outputLabel for="editTel" value="Teléfono"/>
-                        <p:inputText id="editTel" value="#{clienteBean.clienteSeleccionado.telefono}">
-                            <p:keyFilter mask="num"/>
-                        </p:inputText>
+                        <p:inputText id="editTel" value="#{clienteBean.clienteSeleccionado.telefono}"><p:keyFilter mask="num"/></p:inputText>
                     </div>
                     <div class="field">
                         <p:outputLabel for="editMail" value="Correo"/>
-                        <p:inputText id="editMail" value="#{clienteBean.clienteSeleccionado.correo}">
-                            <f:validateRegex pattern="^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$" />
-                        </p:inputText>
+                        <p:inputText id="editMail" value="#{clienteBean.clienteSeleccionado.correo}"/>
                     </div>
                 </div>
-
                 <div class="field">
                     <p:outputLabel for="editDir" value="Dirección"/>
                     <p:inputTextarea id="editDir" value="#{clienteBean.clienteSeleccionado.direccion}" rows="3"/>
                 </div>
             </p:outputPanel>
-
             <f:facet name="footer">
                 <p:commandButton value="Guardar Cambios" icon="pi pi-save"
                                  action="#{clienteBean.guardarCliente()}"
                                  update="manage-product-content dt-clientes msgs"
-                                 process="manage-product-content @this"
-                                 validateClient="true"
-                                 styleClass="btn-save"
+                                 process="manage-product-content @this" validateClient="true" styleClass="btn-save"
                                  oncomplete="if (!args.validationFailed) PF('dlgEditar').hide()"/>
-
                 <p:commandButton value="Cancelar" icon="pi pi-times" onclick="PF('dlgEditar').hide()"
                                  styleClass="ui-button-secondary ui-button-text"/>
             </f:facet>
