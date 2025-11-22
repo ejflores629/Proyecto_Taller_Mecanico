@@ -20,6 +20,7 @@ public class DetalleOrdenBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    // Inyección de Repositorios
     @Inject private OrdenRepository ordenRepository;
     @Inject private OrdenRepuestoRepository ordenRepuestoRepository;
     @Inject private DetalleOrdenRepository detalleOrdenRepository;
@@ -27,17 +28,23 @@ public class DetalleOrdenBean implements Serializable {
     @Inject private UsuarioRepository usuarioRepository;
     @Inject private AsignacionRepository asignacionRepository;
 
+    // Parámetro de URL (El ID de la orden)
     @Getter @Setter
     private String numeroOrdenParam;
 
+    // Datos de la Orden Actual
     @Getter private Orden ordenActual;
+
+    // Listas de Detalles (Tablas)
     @Getter private List<OrdenRepuesto> listaRepuestosAgregados;
     @Getter private List<DetalleOrden> listaManoObraAgregada;
     @Getter private List<Asignacion> listaAsignaciones;
 
+    // Listas para Combos (Selectores)
     @Getter private List<Repuesto> inventarioRepuestos;
     @Getter private List<Usuario> listaTecnicos;
 
+    // Objetos para los Formularios de "Agregar"
     @Getter @Setter
     private OrdenRepuesto nuevoRepuesto;
     @Getter @Setter
@@ -45,6 +52,7 @@ public class DetalleOrdenBean implements Serializable {
     @Getter @Setter
     private Asignacion nuevaAsignacion;
 
+    // Memoria interna para UX (Recordar quién es el jefe de la orden)
     private String idTecnicoPrincipal = null;
 
     @PostConstruct
@@ -54,62 +62,93 @@ public class DetalleOrdenBean implements Serializable {
         this.nuevaAsignacion = new Asignacion();
     }
 
+    /**
+     * Método principal de carga. Se ejecuta al entrar a la página.
+     */
     public void cargarDatos() {
         if (numeroOrdenParam != null && !numeroOrdenParam.isEmpty()) {
+            // 1. Cargar la Cabecera
             this.ordenActual = ordenRepository.findById(numeroOrdenParam);
 
             if (this.ordenActual != null) {
+                // 2. Cargar Listas de Detalle
                 this.listaRepuestosAgregados = ordenRepuestoRepository.findByOrden(numeroOrdenParam);
                 this.listaManoObraAgregada = detalleOrdenRepository.findByOrden(numeroOrdenParam);
                 this.listaAsignaciones = asignacionRepository.findByOrden(numeroOrdenParam);
 
-                // 1. Detectar Técnico Principal para pre-selección
-                if (!this.listaAsignaciones.isEmpty()) {
+                // 3. Lógica UX: Detectar Técnico Principal
+                // Si hay asignaciones, tomamos al primero como el "default" para futuros registros
+                if (this.listaAsignaciones != null && !this.listaAsignaciones.isEmpty()) {
                     this.idTecnicoPrincipal = this.listaAsignaciones.get(0).getDoc_tecnico();
-                    this.nuevaManoObra.setDoc_tecnico(this.idTecnicoPrincipal);
+
+                    // Si el formulario está vacío, lo pre-llenamos
+                    if (this.nuevaManoObra.getDoc_tecnico() == null) {
+                        this.nuevaManoObra.setDoc_tecnico(this.idTecnicoPrincipal);
+                    }
                 }
 
-                // 2. LÓGICA CORREGIDA: Pre-cargar la descripción de la tarea con el problema reportado
-                // Esto ayuda al mecánico a no tener que reescribir "Revisión de frenos"
-                if (this.nuevaManoObra.getDescripcion_tarea() == null || this.nuevaManoObra.getDescripcion_tarea().isEmpty()) {
+                // 4. Lógica UX: Pre-cargar descripción del problema
+                // Si no ha escrito nada, ponemos el problema reportado por el cliente
+                if (this.nuevaManoObra.getDescripcion_tarea() == null || this.nuevaManoObra.getDescripcion_tarea().trim().isEmpty()) {
                     this.nuevaManoObra.setDescripcion_tarea(this.ordenActual.getDescripcion());
                 }
 
+                // 5. Cargar Catálogos
                 this.inventarioRepuestos = repuestoRepository.findAll();
                 this.listaTecnicos = usuarioRepository.findAll();
             }
         }
     }
 
-    // --- ACCIÓN FINALIZAR (UX) ---
-    public String finalizarOrden() {
-        try {
-            if (this.ordenActual == null) return null;
-            if (this.ordenActual.getCosto_total().doubleValue() <= 0) {
-                addMessage(FacesMessage.SEVERITY_WARN, "Atención", "La orden tiene costo cero. Agregue servicios antes de terminar.");
-                return null;
-            }
-            this.ordenActual.setEstado("TERMINADA");
-            ordenRepository.update(this.ordenActual);
+    /**
+     * Seguridad: Verifica si la orden ya está cerrada (facturada).
+     */
+    public boolean isOrdenCerrada() {
+        return this.ordenActual != null && "CERRADA".equals(this.ordenActual.getEstado());
+    }
 
-            FacesContext.getCurrentInstance().getExternalContext().getFlash().setKeepMessages(true);
-            addMessage(FacesMessage.SEVERITY_INFO, "¡Trabajo Terminado!", "Orden lista para facturación.");
-            return "orden?faces-redirect=true";
-        } catch (Exception e) {
-            addMessage(FacesMessage.SEVERITY_ERROR, "Error", e.getMessage());
-            return null;
+    /**
+     * Lógica de Negocio: Si la orden estaba PENDIENTE, pasa a EN PROCESO al hacer cualquier movimiento.
+     */
+    private void verificarInicioTrabajo() {
+        if (this.ordenActual != null && "PENDIENTE".equals(this.ordenActual.getEstado())) {
+            this.ordenActual.setEstado("EN PROCESO");
+            try {
+                ordenRepository.update(this.ordenActual);
+                addMessage(FacesMessage.SEVERITY_INFO, "Estado Actualizado", "La orden cambió a EN PROCESO.");
+            } catch (Exception e) {
+                System.err.println("Error actualizando estado automático: " + e.getMessage());
+            }
         }
     }
 
-    // --- ASIGNACIÓN ---
+    // =========================================================================
+    // ACCIONES: ASIGNACIÓN DE TÉCNICOS
+    // =========================================================================
+
     public void asignarTecnicoPrincipal() {
+        if (isOrdenCerrada()) {
+            addMessage(FacesMessage.SEVERITY_ERROR, "Bloqueado", "No se puede modificar una orden CERRADA.");
+            return;
+        }
+
         try {
-            // VALIDACIÓN: No duplicar técnico
-            boolean yaExiste = listaAsignaciones.stream()
-                    .anyMatch(a -> a.getDoc_tecnico().equals(this.nuevaAsignacion.getDoc_tecnico()));
+            // Validación Null-Safe
+            if (this.nuevaAsignacion.getDoc_tecnico() == null) {
+                addMessage(FacesMessage.SEVERITY_ERROR, "Error", "Debe seleccionar un técnico.");
+                return;
+            }
+
+            // Evitar Duplicados
+            boolean yaExiste = false;
+            if (listaAsignaciones != null) {
+                yaExiste = listaAsignaciones.stream()
+                        .filter(a -> a.getDoc_tecnico() != null)
+                        .anyMatch(a -> a.getDoc_tecnico().equals(this.nuevaAsignacion.getDoc_tecnico()));
+            }
 
             if (yaExiste) {
-                addMessage(FacesMessage.SEVERITY_ERROR, "Duplicado", "Este técnico ya está asignado como responsable.");
+                addMessage(FacesMessage.SEVERITY_ERROR, "Duplicado", "Este técnico ya es responsable.");
                 return;
             }
 
@@ -117,64 +156,93 @@ public class DetalleOrdenBean implements Serializable {
             asignacionRepository.create(this.nuevaAsignacion);
 
             verificarInicioTrabajo();
-            addMessage(FacesMessage.SEVERITY_INFO, "Asignado", "Responsable vinculado.");
-            this.nuevaAsignacion = new Asignacion();
-            cargarDatos();
+            addMessage(FacesMessage.SEVERITY_INFO, "Asignado", "Responsable vinculado correctamente.");
+
+            this.nuevaAsignacion = new Asignacion(); // Limpiar
+            cargarDatos(); // Refrescar listas
         } catch (Exception e) {
             addMessage(FacesMessage.SEVERITY_ERROR, "Error", e.getMessage());
         }
     }
 
     public void eliminarAsignacion(Long id) {
+        if (isOrdenCerrada()) {
+            addMessage(FacesMessage.SEVERITY_ERROR, "Bloqueado", "Orden CERRADA.");
+            return;
+        }
         try {
             asignacionRepository.delete(id);
             addMessage(FacesMessage.SEVERITY_WARN, "Eliminado", "Asignación removida.");
-            this.idTecnicoPrincipal = null;
+            this.idTecnicoPrincipal = null; // Resetear memoria
             cargarDatos();
         } catch (Exception e) {
             addMessage(FacesMessage.SEVERITY_ERROR, "Error", e.getMessage());
         }
     }
 
-    // --- REPUESTOS ---
+    // =========================================================================
+    // ACCIONES: MATERIALES Y REPUESTOS
+    // =========================================================================
+
     public void agregarRepuesto() {
+        if (isOrdenCerrada()) {
+            addMessage(FacesMessage.SEVERITY_ERROR, "Bloqueado", "No se puede modificar una orden CERRADA.");
+            return;
+        }
         try {
             this.nuevoRepuesto.setNumero_orden(ordenActual.getNumero_orden());
             ordenRepuestoRepository.addRepuesto(ordenActual.getNumero_orden(), nuevoRepuesto);
+
             verificarInicioTrabajo();
-            addMessage(FacesMessage.SEVERITY_INFO, "Agregado", "Repuesto añadido.");
-            this.nuevoRepuesto = new OrdenRepuesto();
-            cargarDatos();
+            addMessage(FacesMessage.SEVERITY_INFO, "Agregado", "Repuesto añadido a la orden.");
+
+            this.nuevoRepuesto = new OrdenRepuesto(); // Limpiar
+            cargarDatos(); // Recargar para actualizar Costo Total
         } catch (Exception e) {
             addMessage(FacesMessage.SEVERITY_ERROR, "Error", e.getMessage());
         }
     }
 
     public void eliminarRepuesto(String sku) {
+        if (isOrdenCerrada()) {
+            addMessage(FacesMessage.SEVERITY_ERROR, "Bloqueado", "Orden CERRADA.");
+            return;
+        }
         try {
             ordenRepuestoRepository.removeRepuesto(ordenActual.getNumero_orden(), sku);
-            addMessage(FacesMessage.SEVERITY_WARN, "Eliminado", "Repuesto quitado.");
+            addMessage(FacesMessage.SEVERITY_WARN, "Eliminado", "Repuesto devuelto al inventario.");
             cargarDatos();
         } catch (Exception e) {
             addMessage(FacesMessage.SEVERITY_ERROR, "Error", e.getMessage());
         }
     }
 
-    // --- MANO DE OBRA ---
+    // =========================================================================
+    // ACCIONES: MANO DE OBRA Y SERVICIOS
+    // =========================================================================
+
     public void agregarManoObra() {
+        if (isOrdenCerrada()) {
+            addMessage(FacesMessage.SEVERITY_ERROR, "Bloqueado", "No se puede modificar una orden CERRADA.");
+            return;
+        }
         try {
             this.nuevaManoObra.setNumero_orden(ordenActual.getNumero_orden());
             detalleOrdenRepository.create(nuevaManoObra);
-            verificarInicioTrabajo();
-            addMessage(FacesMessage.SEVERITY_INFO, "Agregado", "Tarea asignada.");
 
+            verificarInicioTrabajo();
+            addMessage(FacesMessage.SEVERITY_INFO, "Agregado", "Tarea registrada.");
+
+            // Limpiar formulario
             this.nuevaManoObra = new DetalleOrden();
-            // Restaurar selección inteligente
+
+            // UX: Restaurar valores inteligentes para la siguiente tarea
             if (this.idTecnicoPrincipal != null) {
                 this.nuevaManoObra.setDoc_tecnico(this.idTecnicoPrincipal);
             }
-            // Restaurar descripción por si agrega otra parecida (opcional, o dejar en blanco)
-            // this.nuevaManoObra.setDescripcion_tarea(ordenActual.getDescripcion());
+            if (this.ordenActual != null) {
+                this.nuevaManoObra.setDescripcion_tarea(this.ordenActual.getDescripcion());
+            }
 
             cargarDatos();
         } catch (Exception e) {
@@ -183,6 +251,10 @@ public class DetalleOrdenBean implements Serializable {
     }
 
     public void eliminarManoObra(Long id) {
+        if (isOrdenCerrada()) {
+            addMessage(FacesMessage.SEVERITY_ERROR, "Bloqueado", "Orden CERRADA.");
+            return;
+        }
         try {
             detalleOrdenRepository.delete(id);
             addMessage(FacesMessage.SEVERITY_WARN, "Eliminado", "Tarea eliminada.");
@@ -192,18 +264,39 @@ public class DetalleOrdenBean implements Serializable {
         }
     }
 
-    private void verificarInicioTrabajo() {
-        if (this.ordenActual != null && "PENDIENTE".equals(this.ordenActual.getEstado())) {
-            this.ordenActual.setEstado("EN PROCESO");
-            try {
-                ordenRepository.update(this.ordenActual);
-                addMessage(FacesMessage.SEVERITY_INFO, "Estado", "Orden cambió a EN PROCESO.");
-            } catch (Exception e) {
-                System.err.println("Error update estado: " + e.getMessage());
+    // =========================================================================
+    // ACCIÓN FINAL: TERMINAR TRABAJO
+    // =========================================================================
+
+    public String finalizarOrden() {
+        if (isOrdenCerrada()) return null;
+
+        try {
+            if (this.ordenActual == null) return null;
+
+            // Validación: No permitir terminar si no hay costos (orden vacía)
+            if (this.ordenActual.getCosto_total().doubleValue() <= 0) {
+                addMessage(FacesMessage.SEVERITY_WARN, "Atención", "La orden tiene costo cero. Agregue servicios antes de terminar.");
+                return null;
             }
+
+            this.ordenActual.setEstado("TERMINADA");
+            ordenRepository.update(this.ordenActual);
+
+            // Mensaje Flash para la siguiente pantalla
+            FacesContext.getCurrentInstance().getExternalContext().getFlash().setKeepMessages(true);
+            addMessage(FacesMessage.SEVERITY_INFO, "¡Trabajo Terminado!", "La orden " + ordenActual.getNumero_orden() + " está lista para facturación.");
+
+            // Redirigir a la lista principal
+            return "orden?faces-redirect=true";
+
+        } catch (Exception e) {
+            addMessage(FacesMessage.SEVERITY_ERROR, "Error", "No se pudo finalizar: " + e.getMessage());
+            return null;
         }
     }
 
+    // Helper de mensajes
     private void addMessage(FacesMessage.Severity severity, String summary, String detail) {
         FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(severity, summary, detail));
     }

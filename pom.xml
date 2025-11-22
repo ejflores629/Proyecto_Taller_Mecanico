@@ -91,6 +91,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>software.xdev</groupId>
+            <artifactId>chartjs-java-model</artifactId>
+            <version>2.9.0</version>
+        </dependency>
     </dependencies>
 
     <build>

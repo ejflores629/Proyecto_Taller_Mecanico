@@ -44,23 +44,22 @@ public class AuthFilter implements Filter {
             return;
         }
 
-        // 4. CONTROL DE ROLES SIMPLIFICADO (ADMIN vs TECNICO)
+        // 4. CONTROL DE ROLES (ACL)
         String rol = userSession.getRolUsuario();
         boolean accesoDenegado = false;
 
         if ("TECNICO".equals(rol)) {
             // El Técnico NO puede entrar a:
-            // - Usuarios (Seguridad)
-            // - Clientes (Administrativo)
-            // - Factura (Dinero/Caja)
+            // - Usuarios (Seguridad del sistema)
+            // - Factura (Caja/Dinero)
+            // CAMBIO: Ahora SÍ puede entrar a /cliente.xhtml
             if (reqURI.contains("/usuario.xhtml") ||
-                    reqURI.contains("/cliente.xhtml") ||
                     reqURI.contains("/factura.xhtml")) {
                 accesoDenegado = true;
             }
         }
 
-        // El ADMIN no tiene restricciones (entra al if solo si es tecnico y quiere entrar a zona prohibida)
+        // El ADMIN tiene acceso total.
 
         if (accesoDenegado) {
             // Rebotar al inicio operativo

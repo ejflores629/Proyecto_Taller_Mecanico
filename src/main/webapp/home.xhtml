@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="jakarta.faces.facelets">
+
+<h:head>
+    <title>Dashboard - Taller Mecánico</title>
+    <style>
+        body { background-color: #f8f9fa; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+        /* Tarjetas KPI */
+        .kpi-card { text-align: center; border-radius: 12px; color: #fff; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; overflow: hidden; padding: 20px; }
+        .kpi-value { font-size: 2.8rem; font-weight: 800; margin: 10px 0; position: relative; z-index: 2; }
+        .kpi-label { font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; position: relative; z-index: 2; }
+        .kpi-icon { font-size: 4rem; opacity: 0.2; position: absolute; top: 10px; right: 10px; z-index: 1; }
+
+        .bg-blue { background: linear-gradient(45deg, #4099ff, #73b4ff); }
+        .bg-green { background: linear-gradient(45deg, #2ed8b6, #59e0c5); }
+        .bg-yellow { background: linear-gradient(45deg, #FFB64D, #ffcb80); }
+        .bg-red { background: linear-gradient(45deg, #FF5370, #ff869a); }
+
+        /* Contenedor Gráficos */
+        .chart-card { background: #fff; border-radius: 12px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); height: 100%; border: 1px solid #eff2f5; }
+        .chart-title { font-size: 1.3rem; color: #2c3e50; font-weight: 700; margin-bottom: 20px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+    </style>
+</h:head>
+
+<h:body>
+    <ui:include src="menu.xhtml" />
+
+    <div style="padding: 20px; max-width: 1400px; margin: 0 auto;">
+
+        <h2 style="color: #2c3e50; margin-bottom: 30px;">
+            Bienvenido, <span style="color: #00688C;">#{userSession.nombreUsuario}</span>
+        </h2>
+
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12 ui-md-6 ui-lg-3">
+                <div class="kpi-card bg-blue">
+                    <i class="pi pi-cog kpi-icon"/>
+                    <div class="kpi-value">#{homeBean.kpi.ordenes_activas}</div>
+                    <div class="kpi-label">Órdenes en Taller</div>
+                </div>
+            </div>
+            <div class="ui-g-12 ui-md-6 ui-lg-3">
+                <div class="kpi-card bg-red">
+                    <i class="pi pi-exclamation-triangle kpi-icon"/>
+                    <div class="kpi-value">#{homeBean.kpi.bajo_stock}</div>
+                    <div class="kpi-label">Repuestos Bajo Stock</div>
+                </div>
+            </div>
+            <ui:fragment rendered="#{userSession.rolUsuario eq 'ADMIN'}">
+                <div class="ui-g-12 ui-md-6 ui-lg-3">
+                    <div class="kpi-card bg-yellow">
+                        <i class="pi pi-users kpi-icon"/>
+                        <div class="kpi-value">#{homeBean.kpi.total_clientes}</div>
+                        <div class="kpi-label">Cartera de Clientes</div>
+                    </div>
+                </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{userSession.rolUsuario eq 'ADMIN'}">
+                <div class="ui-g-12 ui-md-6 ui-lg-3">
+                    <div class="kpi-card bg-green">
+                        <i class="pi pi-money-bill kpi-icon"/>
+                        <div class="kpi-value">
+                            <h:outputText value="#{homeBean.kpi.ingresos_mes}">
+                                <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
+                            </h:outputText>
+                        </div>
+                        <div class="kpi-label">Ingresos del Mes</div>
+                    </div>
+                </div>
+            </ui:fragment>
+        </div>
+
+        <div class="ui-g ui-fluid" style="margin-top: 15px;">
+
+            <div class="ui-g-12 ui-lg-6">
+                <div class="chart-card">
+                    <div class="chart-title"><i class="pi pi-chart-pie" style="color: #3b82f6;"/> Estado Actual del Taller</div>
+
+                    <p:chart value="#{homeBean.pieModelJson}" style="width: 100%; height: 350px;"/>
+                </div>
+            </div>
+
+            <ui:fragment rendered="#{userSession.rolUsuario eq 'ADMIN'}">
+                <div class="ui-g-12 ui-lg-6">
+                    <div class="chart-card">
+                        <div class="chart-title"><i class="pi pi-chart-bar" style="color: #28a745;"/> Historial de Ingresos</div>
+
+                        <p:chart value="#{homeBean.barModelJson}" style="width: 100%; height: 350px;"/>
+                    </div>
+                </div>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{userSession.rolUsuario eq 'TECNICO'}">
+                <div class="ui-g-12 ui-lg-6">
+                    <div class="chart-card" style="display: flex; align-items: center; justify-content: center; background: #f8f9fa; border: 2px dashed #dee2e6;">
+                        <div style="text-align: center; color: #adb5bd;">
+                            <i class="pi pi-lock" style="font-size: 4rem; margin-bottom: 15px;"/><br/>
+                            <span style="font-size: 1.2rem; font-weight: bold;">Información Financiera Restringida</span>
+                        </div>
+                    </div>
+                </div>
+            </ui:fragment>
+        </div>
+
+    </div>
+</h:body>
+</html>

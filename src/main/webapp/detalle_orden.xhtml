@@ -14,38 +14,31 @@
     <title>Mesa de Trabajo - Orden #{detalleBean.numeroOrdenParam}</title>
     <style>
         body { background-color: #f8f9fa; font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #495057; }
-
-        /* Header de la Orden */
         .header-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #00688C; }
         .header-info h2 { margin: 0; color: #2c3e50; font-size: 1.8rem; }
         .header-info p { margin: 5px 0 0; color: #6c757d; font-size: 1.1rem; }
-
-        /* Caja de Costos */
         .costo-box { text-align: right; }
         .costo-label { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         .costo-valor { font-size: 2.5rem; font-weight: 800; color: #28a745; margin: 0; line-height: 1; }
-
-        /* Pestañas personalizadas */
         .tab-custom .ui-tabs-nav { background: transparent !important; border-bottom: 2px solid #e9ecef !important; padding: 0 !important; }
         .tab-custom .ui-tabs-nav li { background: transparent !important; border: none !important; box-shadow: none !important; margin-right: 5px !important; }
         .tab-custom .ui-tabs-nav li.ui-tabs-selected a { border-bottom: 3px solid #00688C !important; color: #00688C !important; font-weight: bold; }
         .tab-custom .ui-tabs-panel { padding: 25px 0 !important; background: transparent !important; }
-
-        /* Etiquetas y Badges */
         .tech-tag { background-color: #e3f2fd; color: #0d47a1; padding: 4px 10px; border-radius: 15px; font-size: 0.9rem; font-weight: bold; margin-left: 10px; display: inline-flex; align-items: center; gap: 5px; }
         .status-badge { padding: 5px 10px; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 0.85rem; background: #eee; color: #555; }
-
-        /* Botones */
         .btn-action { font-weight: bold !important; }
     </style>
 </h:head>
 
 <h:body>
-
     <ui:include src="menu.xhtml" />
 
     <h:form id="formDetalle">
         <p:growl id="msgs" showDetail="true" life="4000" globalOnly="true"/>
+
+        <p:staticMessage severity="warn" summary="MODO LECTURA" detail="Esta orden está CERRADA y facturada. No se permiten modificaciones."
+                         style="width: 100%; margin-bottom: 15px;"
+                         rendered="#{detalleBean.ordenActual.estado eq 'CERRADA'}"/>
 
         <div class="header-card">
             <div class="header-info">
@@ -56,9 +49,7 @@
                     <i class="pi pi-user" style="margin-right: 5px;"/> #{detalleBean.ordenActual.cliente}
 
                     <ui:fragment rendered="#{not empty detalleBean.listaAsignaciones}">
-                        <span class="tech-tag">
-                            <i class="pi pi-id-card"/> #{detalleBean.listaAsignaciones[0].tecnico}
-                        </span>
+                        <span class="tech-tag"><i class="pi pi-id-card"/> #{detalleBean.listaAsignaciones[0].tecnico}</span>
                     </ui:fragment>
                 </p>
                 <div style="margin-top: 12px;">
@@ -80,14 +71,10 @@
 
                     <p:commandButton value="Finalizar Trabajo" icon="pi pi-check-circle"
                                      action="#{detalleBean.finalizarOrden}"
-                                     process="@this"
                                      update="@form"
                                      styleClass="ui-button-success btn-action"
                                      rendered="#{detalleBean.ordenActual.estado ne 'CERRADA' and detalleBean.ordenActual.estado ne 'TERMINADA'}">
-
-                        <p:confirm header="Finalizar Orden"
-                                   message="¿Confirma que el trabajo ha concluido? La orden pasará a estado TERMINADA y saldremos de esta pantalla."
-                                   icon="pi pi-check-square"/>
+                        <p:confirm header="Finalizar Orden" message="¿Confirma que el trabajo ha concluido?" icon="pi pi-check-square"/>
                     </p:commandButton>
 
                     <p:tag styleClass="p-2" severity="success" value="¡Lista para Facturar!"
@@ -102,21 +89,20 @@
 
             <p:tab title="Responsables y Equipo">
                 <div style="display: flex; gap: 25px; flex-wrap: wrap;">
-                    <p:card style="width: 350px; flex-shrink: 0;">
-                        <f:facet name="title">Asignar Técnico Principal</f:facet>
 
+                    <p:card style="width: 350px; flex-shrink: 0;"
+                            rendered="#{detalleBean.ordenActual.estado ne 'CERRADA'}">
+                        <f:facet name="title">Asignar Técnico Principal</f:facet>
                         <p:outputPanel id="panelAsign" styleClass="ui-fluid">
                             <div class="field">
                                 <p:outputLabel value="Seleccionar Técnico" style="font-weight: bold;"/>
                                 <p:selectOneMenu value="#{detalleBean.nuevaAsignacion.doc_tecnico}"
-                                                 filter="true" filterMatchMode="contains" required="true"
-                                                 requiredMessage="⚠️ Seleccione un técnico">
+                                                 filter="true" filterMatchMode="contains" required="true">
                                     <f:selectItem itemLabel="-- Seleccione --" itemValue=""/>
                                     <f:selectItems value="#{detalleBean.listaTecnicos}" var="t"
                                                    itemLabel="#{t.nombre_completo} (#{t.rol})" itemValue="#{t.doc_identidad}"/>
                                 </p:selectOneMenu>
                             </div>
-
                             <p:commandButton value="Asignar Responsable" icon="pi pi-user-plus"
                                              action="#{detalleBean.asignarTecnicoPrincipal}"
                                              process="@this panelAsign"
@@ -141,8 +127,8 @@
                             <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger ui-button-flat rounded-button"
                                              action="#{detalleBean.eliminarAsignacion(asig.id_asignacion)}"
                                              process="@this" update="@form"
-                                             title="Quitar asignación">
-                                <p:confirm header="Quitar" message="¿Quitar responsabilidad a este técnico?" icon="pi pi-exclamation-triangle"/>
+                                             rendered="#{detalleBean.ordenActual.estado ne 'CERRADA'}">
+                                <p:confirm header="Quitar" message="¿Quitar responsabilidad?" icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
@@ -151,26 +137,24 @@
 
             <p:tab title="Materiales y Repuestos">
                 <div style="display: flex; gap: 25px; flex-wrap: wrap;">
-                    <p:card style="width: 350px; flex-shrink: 0;">
-                        <f:facet name="title">Agregar Repuesto</f:facet>
 
+                    <p:card style="width: 350px; flex-shrink: 0;"
+                            rendered="#{detalleBean.ordenActual.estado ne 'CERRADA'}">
+                        <f:facet name="title">Agregar Repuesto</f:facet>
                         <p:outputPanel id="panelRepuesto" styleClass="ui-fluid">
                             <div class="field">
                                 <p:outputLabel value="Seleccionar Repuesto" style="font-weight: bold;"/>
                                 <p:selectOneMenu value="#{detalleBean.nuevoRepuesto.codigo_sku}"
-                                                 filter="true" filterMatchMode="contains" required="true"
-                                                 requiredMessage="⚠️ Seleccione un repuesto">
+                                                 filter="true" filterMatchMode="contains" required="true">
                                     <f:selectItem itemLabel="-- Buscar en Inventario --" itemValue=""/>
                                     <f:selectItems value="#{detalleBean.inventarioRepuestos}" var="r"
-                                                   itemLabel="#{r.nombre} (Stock: #{r.stock_actual})"
-                                                   itemValue="#{r.codigo_sku}"/>
+                                                   itemLabel="#{r.nombre} (Stock: #{r.stock_actual})" itemValue="#{r.codigo_sku}"/>
                                 </p:selectOneMenu>
                             </div>
                             <div class="field" style="margin-top:15px;">
                                 <p:outputLabel value="Cantidad" style="font-weight: bold;"/>
                                 <p:spinner value="#{detalleBean.nuevoRepuesto.cantidad_utilizada}" min="1" required="true"/>
                             </div>
-
                             <p:commandButton value="Agregar al Carrito" icon="pi pi-cart-plus"
                                              action="#{detalleBean.agregarRepuesto}"
                                              process="@this panelRepuesto"
@@ -179,31 +163,25 @@
                     </p:card>
 
                     <p:dataTable value="#{detalleBean.listaRepuestosAgregados}" var="item" style="flex: 1; min-width: 400px;"
-                                 emptyMessage="No se han utilizado materiales en esta orden.">
+                                 emptyMessage="No se han utilizado materiales.">
                         <p:column headerText="Repuesto / Material">
-                            <h:outputText value="#{item.repuesto}" style="font-weight: 600;"/>
-                            <br/><small style="color:#888;">SKU: #{item.codigo_sku}</small>
+                            <h:outputText value="#{item.repuesto}" style="font-weight: 600;"/> <br/><small style="color:#888;">SKU: #{item.codigo_sku}</small>
                         </p:column>
                         <p:column headerText="Cant." width="70" style="text-align: center;">
-                            <span style="background:#eee; padding: 2px 8px; border-radius: 4px; font-weight: bold;">
-                                #{item.cantidad_utilizada}
-                            </span>
+                            <span style="background:#eee; padding: 2px 8px; border-radius: 4px; font-weight: bold;">#{item.cantidad_utilizada}</span>
                         </p:column>
                         <p:column headerText="Precio Unit." width="110" style="text-align: right;">
-                            <h:outputText value="#{item.precio_venta_momento}">
-                                <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
-                            </h:outputText>
+                            <h:outputText value="#{item.precio_venta_momento}"><f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/></h:outputText>
                         </p:column>
                         <p:column headerText="Subtotal" width="110" style="text-align: right;">
-                            <h:outputText value="#{item.subtotal}" style="font-weight:bold; color:#333;">
-                                <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
-                            </h:outputText>
+                            <h:outputText value="#{item.subtotal}" style="font-weight:bold; color:#333;"><f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/></h:outputText>
                         </p:column>
                         <p:column width="60" style="text-align: center;">
                             <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger ui-button-flat rounded-button"
                                              action="#{detalleBean.eliminarRepuesto(item.codigo_sku)}"
-                                             process="@this" update="@form">
-                                <p:confirm header="Quitar" message="¿Quitar este repuesto de la orden?" icon="pi pi-exclamation-triangle"/>
+                                             process="@this" update="@form"
+                                             rendered="#{detalleBean.ordenActual.estado ne 'CERRADA'}">
+                                <p:confirm header="Quitar" message="¿Quitar este repuesto?" icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
@@ -212,14 +190,15 @@
 
             <p:tab title="Mano de Obra y Servicios">
                 <div style="display: flex; gap: 25px; flex-wrap: wrap;">
-                    <p:card style="width: 350px; flex-shrink: 0;">
-                        <f:facet name="title">Registrar Tarea</f:facet>
 
+                    <p:card style="width: 350px; flex-shrink: 0;"
+                            rendered="#{detalleBean.ordenActual.estado ne 'CERRADA'}">
+                        <f:facet name="title">Registrar Tarea</f:facet>
                         <p:outputPanel id="panelManoObra" styleClass="ui-fluid">
                             <div class="field">
                                 <p:outputLabel value="Técnico Ejecutor" style="font-weight: bold;"/>
                                 <p:selectOneMenu value="#{detalleBean.nuevaManoObra.doc_tecnico}"
-                                                 filter="true" required="true" requiredMessage="⚠️ Seleccione quién realiza la tarea">
+                                                 filter="true" required="true">
                                     <f:selectItem itemLabel="-- Seleccione --" itemValue=""/>
                                     <f:selectItems value="#{detalleBean.listaTecnicos}" var="t"
                                                    itemLabel="#{t.nombre_completo}" itemValue="#{t.doc_identidad}"/>
@@ -227,22 +206,16 @@
                             </div>
                             <div class="field" style="margin-top:15px;">
                                 <p:outputLabel value="Descripción de la Tarea" style="font-weight: bold;"/>
-                                <p:inputText value="#{detalleBean.nuevaManoObra.descripcion_tarea}"
-                                             required="true" requiredMessage="⚠️ Describa la tarea realizada"
-                                             placeholder="Ej: Cambio de Balatas"/>
+                                <p:inputText value="#{detalleBean.nuevaManoObra.descripcion_tarea}" required="true"/>
                             </div>
                             <div class="field" style="margin-top:15px;">
                                 <p:outputLabel value="Costo Mano de Obra (L.)" style="font-weight: bold;"/>
-                                <p:inputNumber value="#{detalleBean.nuevaManoObra.costo_mano_obra}"
-                                               symbol="L. " symbolPosition="p" minValue="0"
-                                               required="true" requiredMessage="⚠️ Ingrese el costo"/>
+                                <p:inputNumber value="#{detalleBean.nuevaManoObra.costo_mano_obra}" symbol="L. " symbolPosition="p" minValue="0" required="true"/>
                             </div>
                             <div class="field" style="margin-top:15px;">
                                 <p:outputLabel value="Horas Estimadas"/>
-                                <p:inputNumber value="#{detalleBean.nuevaManoObra.tiempo_estimado_hrs}"
-                                               decimalPlaces="1" symbol=" h" symbolPosition="s"/>
+                                <p:inputNumber value="#{detalleBean.nuevaManoObra.tiempo_estimado_hrs}" decimalPlaces="1" symbol=" h" symbolPosition="s"/>
                             </div>
-
                             <p:commandButton value="Agregar Tarea" icon="pi pi-plus-circle"
                                              action="#{detalleBean.agregarManoObra}"
                                              process="@this panelManoObra"
@@ -251,42 +224,34 @@
                     </p:card>
 
                     <p:dataTable value="#{detalleBean.listaManoObraAgregada}" var="mo" style="flex: 1; min-width: 400px;"
-                                 emptyMessage="No se han registrado tareas de mano de obra.">
+                                 emptyMessage="No se han registrado tareas.">
                         <p:column headerText="Descripción de Tarea">
                             <h:outputText value="#{mo.descripcion_tarea}" style="font-weight:bold; font-size: 1.05rem;"/>
-                            <br/>
-                            <small style="color: #666;">
-                                <i class="pi pi-user"/> Ejecutado por: #{mo.tecnico}
-                            </small>
+                            <br/> <small style="color: #666;"><i class="pi pi-user"/> Ejecutado por: #{mo.tecnico}</small>
                         </p:column>
                         <p:column headerText="Tiempo" width="90" style="text-align: center;">
-                            <span style="background:#fff3cd; padding: 2px 8px; border-radius: 4px; color: #856404;">
-                                #{mo.tiempo_estimado_hrs} h
-                            </span>
+                            <span style="background:#fff3cd; padding: 2px 8px; border-radius: 4px; color: #856404;">#{mo.tiempo_estimado_hrs} h</span>
                         </p:column>
                         <p:column headerText="Costo" width="110" style="text-align: right;">
-                            <h:outputText value="#{mo.costo_mano_obra}" style="font-weight:bold; color:#333;">
-                                <f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/>
-                            </h:outputText>
+                            <h:outputText value="#{mo.costo_mano_obra}" style="font-weight:bold; color:#333;"><f:convertNumber type="currency" currencySymbol="L." locale="es_HN"/></h:outputText>
                         </p:column>
                         <p:column width="60" style="text-align: center;">
                             <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger ui-button-flat rounded-button"
                                              action="#{detalleBean.eliminarManoObra(mo.id_detalle)}"
-                                             process="@this" update="@form">
-                                <p:confirm header="Eliminar" message="¿Eliminar esta tarea de la orden?" icon="pi pi-exclamation-triangle"/>
+                                             process="@this" update="@form"
+                                             rendered="#{detalleBean.ordenActual.estado ne 'CERRADA'}">
+                                <p:confirm header="Eliminar" message="¿Eliminar esta tarea?" icon="pi pi-exclamation-triangle"/>
                             </p:commandButton>
                         </p:column>
                     </p:dataTable>
                 </div>
             </p:tab>
-
         </p:tabView>
 
         <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
             <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
             <p:commandButton value="Sí, Proceder" type="button" styleClass="ui-confirmdialog-yes ui-button-danger" />
         </p:confirmDialog>
-
     </h:form>
 </h:body>
 </html>

@@ -70,7 +70,7 @@ public class LoginBean {
 
                 // Redirigir al área de trabajo (Ordenes)
                 ExternalContext ec = context.getExternalContext();
-                ec.redirect(ec.getRequestContextPath() + "/orden.xhtml");
+                ec.redirect(ec.getRequestContextPath() + "/home.xhtml");
             } else {
                 // Login Fallido
                 context.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR, "Acceso Denegado", "Usuario o contraseña incorrectos."));

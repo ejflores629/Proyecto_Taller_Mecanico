@@ -235,4 +235,17 @@ public interface ApiService {
 
     @DELETE("facturas/{num_factura}")
     Call<Void> anularFactura(@Path("num_factura") String numFactura);
+
+    // =========================================================================
+    // 10. DASHBOARD (Estadísticas)
+    // =========================================================================
+
+    @GET("dashboard/resumen")
+    Call<DashboardStats> getResumenKpi();
+
+    @GET("dashboard/ordenes-estado")
+    Call<ORDSCollectionResponse<DashboardStats>> getStatsOrdenesPorEstado();
+
+    @GET("dashboard/ventas-historial")
+    Call<ORDSCollectionResponse<DashboardStats>> getStatsVentasHistorial();
 }

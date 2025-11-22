@@ -7,11 +7,14 @@
     <h:form id="menuForm">
         <p:menubar style="margin-bottom: 20px; border-radius: 8px; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 0.5rem 1rem;">
 
-            <p:menuitem value="Inicio" icon="pi pi-home" outcome="orden.xhtml"/>
+            <p:menuitem value="Inicio" icon="pi pi-home" outcome="home.xhtml"/>
 
             <p:submenu label="Administración" icon="pi pi-cog"
-                       rendered="#{userSession.rolUsuario eq 'ADMIN'}">
-                <p:menuitem value="Usuarios" icon="pi pi-users" outcome="usuario.xhtml"/>
+                       rendered="#{userSession.rolUsuario eq 'ADMIN' or userSession.rolUsuario eq 'TECNICO'}">
+
+                <p:menuitem value="Usuarios" icon="pi pi-users" outcome="usuario.xhtml"
+                            rendered="#{userSession.rolUsuario eq 'ADMIN'}"/>
+
                 <p:menuitem value="Clientes" icon="pi pi-user" outcome="cliente.xhtml"/>
             </p:submenu>
 
