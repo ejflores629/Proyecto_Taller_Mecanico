@@ -13,7 +13,9 @@ public interface VehiculoRepository {
 
     Vehiculo findById(String placa);
 
-    void save(Vehiculo vehiculo);
+    void create(Vehiculo vehiculo);
+
+    void update(Vehiculo vehiculo);
 
     void delete(String placa);
 }

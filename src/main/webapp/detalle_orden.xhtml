@@ -71,10 +71,11 @@
 
                     <p:commandButton value="Finalizar Trabajo" icon="pi pi-check-circle"
                                      action="#{detalleBean.finalizarOrden}"
+                                     process="@this"
                                      update="@form"
                                      styleClass="ui-button-success btn-action"
                                      rendered="#{detalleBean.ordenActual.estado ne 'CERRADA' and detalleBean.ordenActual.estado ne 'TERMINADA'}">
-                        <p:confirm header="Finalizar Orden" message="¿Confirma que el trabajo ha concluido?" icon="pi pi-check-square"/>
+                        <p:confirm header="Finalizar Orden" message="¿Confirma que el trabajo ha concluido? (Requiere costo > 0)" icon="pi pi-check-square"/>
                     </p:commandButton>
 
                     <p:tag styleClass="p-2" severity="success" value="¡Lista para Facturar!"
@@ -90,8 +91,7 @@
             <p:tab title="Responsables y Equipo">
                 <div style="display: flex; gap: 25px; flex-wrap: wrap;">
 
-                    <p:card style="width: 350px; flex-shrink: 0;"
-                            rendered="#{detalleBean.ordenActual.estado ne 'CERRADA'}">
+                    <p:card style="width: 350px; flex-shrink: 0;" rendered="#{detalleBean.ordenActual.estado ne 'CERRADA'}">
                         <f:facet name="title">Asignar Técnico Principal</f:facet>
                         <p:outputPanel id="panelAsign" styleClass="ui-fluid">
                             <div class="field">

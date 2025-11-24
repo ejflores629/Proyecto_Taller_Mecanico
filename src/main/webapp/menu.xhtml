@@ -27,7 +27,7 @@
 
             <p:menuitem value="Caja / Facturación" icon="pi pi-wallet" outcome="factura.xhtml"
                         style="font-weight: bold; color: #00688C !important;"
-                        rendered="#{userSession.rolUsuario eq 'ADMIN'}"/>
+                        rendered="#{userSession.rolUsuario eq 'ADMIN' or userSession.rolUsuario eq 'TECNICO'}"/>
 
             <f:facet name="options">
                 <div style="display: flex; align-items: center; gap: 15px;">

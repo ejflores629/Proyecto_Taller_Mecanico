@@ -52,7 +52,6 @@ public class VehiculoRepositoryImpl implements VehiculoRepository {
     public Vehiculo findById(String placa) {
         if (placa == null || placa.trim().isEmpty()) return null;
         try {
-            // CAMBIO: Recibimos colección
             Response<ORDSCollectionResponse<Vehiculo>> response = apiService.getVehiculo(placa).execute();
             if (response.isSuccessful() && response.body() != null) {
                 List<Vehiculo> lista = response.body().getItems();
@@ -66,28 +65,32 @@ public class VehiculoRepositoryImpl implements VehiculoRepository {
         return null;
     }
 
-    @Override
-    public void save(Vehiculo vehiculo) {
-        // IMPORTANTE: Aquí mantuve 'save' genérico en el ejemplo anterior,
-        // pero deberíamos separarlo si quieres la misma validación estricta.
-        // Por simplicidad y consistencia con lo que ya tenías, aplicamos la lógica interna:
+    // --- CORRECCIÓN: Métodos separados para evitar ambigüedad ---
 
-        if (vehiculo.getActivo() != null && !vehiculo.getActivo().isEmpty()) {
-            // UPDATE
-            try {
-                Response<Void> response = apiService.actualizarVehiculo(vehiculo.getPlaca(), vehiculo).execute();
-                checkResponse(response, "Error actualizando vehículo");
-            } catch(IOException e) { throw new RuntimeException(e); }
-        } else {
-            // CREATE - Validamos existencia
-            Vehiculo existente = findById(vehiculo.getPlaca());
-            if (existente != null) {
-                throw new RuntimeException("⚠️ Ya existe un vehículo ACTIVO con la placa " + vehiculo.getPlaca());
-            }
-            try {
-                Response<Void> response = apiService.crearVehiculo(vehiculo).execute();
-                checkResponse(response, "Error creando vehículo");
-            } catch(IOException e) { throw new RuntimeException(e); }
+    @Override
+    public void create(Vehiculo vehiculo) {
+        // Solo al CREAR validamos si ya existe
+        Vehiculo existente = findById(vehiculo.getPlaca());
+        if (existente != null) {
+            throw new RuntimeException("⚠️ Ya existe un vehículo ACTIVO con la placa " + vehiculo.getPlaca());
+        }
+
+        try {
+            Response<Void> response = apiService.crearVehiculo(vehiculo).execute();
+            checkResponse(response, "Error creando vehículo");
+        } catch(IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void update(Vehiculo vehiculo) {
+        // Al ACTUALIZAR asumimos que ya existe (porque viene del grid)
+        try {
+            Response<Void> response = apiService.actualizarVehiculo(vehiculo.getPlaca(), vehiculo).execute();
+            checkResponse(response, "Error actualizando vehículo");
+        } catch(IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

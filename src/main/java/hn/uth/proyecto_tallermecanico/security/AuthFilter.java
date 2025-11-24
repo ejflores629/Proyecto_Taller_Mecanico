@@ -51,10 +51,8 @@ public class AuthFilter implements Filter {
         if ("TECNICO".equals(rol)) {
             // El Técnico NO puede entrar a:
             // - Usuarios (Seguridad del sistema)
-            // - Factura (Caja/Dinero)
-            // CAMBIO: Ahora SÍ puede entrar a /cliente.xhtml
-            if (reqURI.contains("/usuario.xhtml") ||
-                    reqURI.contains("/factura.xhtml")) {
+            // CAMBIO: Se eliminó factura.xhtml de la lista negra, ahora tiene acceso.
+            if (reqURI.contains("/usuario.xhtml")) {
                 accesoDenegado = true;
             }
         }
